@@ -171,18 +171,36 @@ So: heal **in the pipeline, not in the test**. Propose, validate hard, and let a
 ## 7. Compared with Playwright's own healer
 
 Playwright 1.56+ ships **Test Agents** (`npx playwright init-agents --loop=claude`): planner,
-generator and **healer** sub-agents for Claude Code. The healer replays a failing test, inspects
-the live page through Playwright's MCP tools, **edits the test file directly**, and re-runs it. If
-it decides the feature itself is broken, it can mark the test `test.fixme()`.
+generator and **healer** sub-agents for Claude Code. I ran its healer on the same six failures, on
+a throwaway branch that was deleted afterwards, through headless Claude Code with only the
+healer's own tools allowed (file edits and Playwright MCP, no shell). Evidence:
+[`self-heal/comparison/`](self-heal/comparison) (its full diff and a run summary).
 
-|                 | Playwright Test Agents healer        | This POC                                                                                              |
-| --------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| Model output    | free-form edits to the test file     | structured candidates only; code built by us                                                          |
-| Scope of change | anything in the file                 | only the locator expression of one member                                                             |
-| Failure triage  | the agent's judgement                | deterministic classifier; assertion failures refused before any model call                            |
-| Validation      | the agent re-runs the test           | stable + unique + visible + role + re-run ×3, then byte-identical restore; one bounded feedback round |
-| Applying        | edits in place                       | proposal + patch only; a human applies it                                                             |
-| Best for        | exploratory repair in an IDE session | unattended CI triage where false heals are expensive                                                  |
+| Scenario | Test Agents healer                                                                                                             | This POC                                                               |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| Broken 1 | `getByRole('link', { name: 'Personal Loan', exact: true })`                                                                    | same                                                                   |
+| Broken 2 | `locator('#loanamount')`: the corrected id, still id-based                                                                     | `getByRole('textbox', { name: 'Home Loan Amount', exact: true })`      |
+| Broken 3 | `getByLabel('Interest Rate', { exact: true })`                                                                                 | `getByLabel('Interest rate')`                                          |
+| Broken 4 | ✅ `locator('#emiamount p')`: it inspects the **DOM** (`browser_evaluate`), so it found the id                                 | 🙋 needs a human: the model only sees the accessibility snapshot       |
+| Control  | diagnosed correctly, then **tagged the scenario `@fixme`**: a failing test silently becomes a skipped one                      | 🛑 refused before any model call; the test stays visibly red           |
+| Also     | edited the BDD feature file and **hand-edited a generated spec** (overwritten by `bddgen`); stalled asking to run `npx bddgen` | spec files are never touched; the BDD build step is part of validation |
+| Cost     | 23 turns, 6.4 min, $1.93                                                                                                       | 7 schema-constrained calls; time dominated by the ×3 re-runs           |
+
+**What I take from it.** The agent is more _capable_: DOM access solved the one case my POC
+couldn't. It is also more _willing to change things it shouldn't_. Skipping the control test is
+reasonable in an interactive session where a developer is watching, and dangerous in unattended
+CI, where a skipped test is easy to miss. The improvement it suggests for my POC is to give the
+model a small, sanitised DOM excerpt (ids near the old element) as a third grounding source,
+bounded by the same stability and uniqueness gates.
+
+|                 | Playwright Test Agents healer                          | This POC                                                                                              |
+| --------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Model output    | free-form edits to the test file                       | structured candidates only; code built by us                                                          |
+| Scope of change | anything in the file                                   | only the locator expression of one member                                                             |
+| Failure triage  | the agent's judgement (here: skipped the control test) | deterministic classifier; assertion failures refused before any model call                            |
+| Validation      | the agent re-runs the test                             | stable + unique + visible + role + re-run ×3, then byte-identical restore; one bounded feedback round |
+| Applying        | edits in place                                         | proposal + patch only; a human applies it                                                             |
+| Best for        | exploratory repair in an IDE session                   | unattended CI triage where false heals are expensive                                                  |
 
 They're complementary: the agent is great in an interactive session; a constrained, auditable
 pipeline is safer unattended.

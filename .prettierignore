@@ -6,3 +6,7 @@ reports/
 .claude/
 docs/research/
 package-lock.json
+self-heal/out/
+self-heal/comparison/
+self-heal/cassettes/
+sql/results/
