@@ -17,6 +17,7 @@ Feature: Personal loan EMI bar chart
     When I change the schedule start month to <month> of next year
     Then the bar chart is visible
     And the bar chart has one bar per calendar year of the schedule, <years> in total
+    And the yearly interest and principal in the bar chart match my amortization schedule
     When I hover over the <series> bar of the second year of the schedule
     Then the tooltip shows that year's <series> and total payment from my amortization schedule
 

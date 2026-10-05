@@ -44,10 +44,26 @@ export class BarChart {
   }
 
   /**
-   * Waits until the chart shows exactly these years, each with the expected rupee-rounded
-   * interest and principal. Call before counting, hovering or capturing.
+   * Structure only: waits until the chart has been redrawn with exactly these calendar years.
+   * Use it to know the chart has settled for the current inputs. Value correctness is checked
+   * separately (`expectYearlyValues`), so a wrong value is reported as a value mismatch and not
+   * as a rendering problem.
    */
-  async waitForYears(expected: { year: number; interest: number; principal: number }[]) {
+  async waitForYearCategories(years: number[]): Promise<void> {
+    await waitForChartData(
+      this.page,
+      BarChart.containerId,
+      (points) => points.filter((p) => p.series === 'Interest').map((p) => Number(p.category)),
+      years,
+      'bar chart redrawn with one column per calendar year of the schedule',
+    );
+  }
+
+  /**
+   * Waits until every year's interest and principal (rounded to the rupee) equal the expected
+   * values. The diff in the failure message shows exactly which year and series disagree.
+   */
+  async expectYearlyValues(expected: { year: number; interest: number; principal: number }[]) {
     await waitForChartData(
       this.page,
       BarChart.containerId,
@@ -64,7 +80,7 @@ export class BarChart {
         }));
       },
       expected,
-      'bar chart redrawn for the entered loan and start month',
+      'yearly interest and principal in the bar chart vs. the amortization schedule',
     );
   }
 
@@ -98,14 +114,22 @@ export class BarChart {
    * the tooltip lazily on mouse movement: a hover delivered while the page is still settling
    * (e.g. right after a scroll) can be missed. A raw mouse.move to computed coordinates failed
    * intermittently for exactly that reason (M3 stability run).
+   *
+   * The bar is re-resolved on every attempt, so a redraw between attempts can't leave the retry
+   * hovering whatever element now sits at a stale index. The retry only covers *delivering* the
+   * hover: the tooltip must show this exact year and series, and its values are checked strictly
+   * by the caller. Returns the number of attempts so callers can report retries.
    */
-  async hoverBar(year: number, series: BarSeries): Promise<void> {
-    const bar = await this.barFor(year, series);
+  async hoverBar(year: number, series: BarSeries): Promise<number> {
+    let attempts = 0;
     await expect(async () => {
+      attempts += 1;
+      const bar = await this.barFor(year, series);
       await this.page.mouse.move(0, 0); // leave the chart so the next hover is a fresh entry
       await bar.hover();
       await expect(this.tooltip).toContainText(`Year : ${year}${series}`, { timeout: 2_000 });
     }).toPass({ timeout: 15_000 });
+    return attempts;
   }
 
   /** Parses e.g. "Year : 2028Interest : ₹ 91,948Total Payment : ₹ 2,66,933". */

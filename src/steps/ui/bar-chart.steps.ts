@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import { requireLoan, Then, When, type ScenarioContext } from '../../fixtures';
 import { BarChart, type BarSeries } from '../../pages/components/BarChart';
 import { amortizeByYear, type YearMonth } from '../../support/emi-math';
+import { formatInr } from '../../support/inr';
 
 const MONTHS = [
   'January',
@@ -52,15 +53,23 @@ When(
 Then('the bar chart is visible', async ({ emiPage, ctx }) => {
   const chart = emiPage.barChart;
   await expect(chart.svg).toBeVisible();
-  // Wait for the redraw for this loan and start month before anything reads the chart.
-  await chart.waitForYears(
-    requireSchedule(ctx).years.map((y) => ({
-      year: y.year,
-      interest: Math.round(y.interest),
-      principal: Math.round(y.principal),
-    })),
-  );
+  // Settle on structure only (the redraw for this start month), so later steps read the right
+  // chart. Values are verified by their own step, which gives a precise failure message.
+  await chart.waitForYearCategories(requireSchedule(ctx).years.map((y) => y.year));
 });
+
+Then(
+  'the yearly interest and principal in the bar chart match my amortization schedule',
+  async ({ emiPage, ctx }) => {
+    await emiPage.barChart.expectYearlyValues(
+      requireSchedule(ctx).years.map((y) => ({
+        year: y.year,
+        interest: Math.round(y.interest),
+        principal: Math.round(y.principal),
+      })),
+    );
+  },
+);
 
 Then(
   'the bar chart has one bar per calendar year of the schedule, {int} in total',
@@ -91,11 +100,18 @@ Then(
 
 When(
   'I hover over the {word} bar of the second year of the schedule',
-  async ({ emiPage, ctx }, seriesName: string) => {
+  async ({ emiPage, ctx, $testInfo }, seriesName: string) => {
     const series = toSeries(seriesName);
     const year = requireSchedule(ctx).years[1]!.year;
-    await emiPage.barChart.hoverBar(year, series);
+    const attempts = await emiPage.barChart.hoverBar(year, series);
     ctx.hoveredBar = { year, series };
+    // Make hover retries visible in the report instead of silently absorbing them.
+    if (attempts > 1) {
+      $testInfo.annotations.push({
+        type: 'hover-retry',
+        description: `${series} ${year}: tooltip appeared after ${attempts} hover attempts`,
+      });
+    }
   },
 );
 
@@ -107,9 +123,20 @@ Then(
     expect(toSeries(seriesName)).toBe(hovered.series);
     const expectedYear = requireSchedule(ctx).years.find((y) => y.year === hovered.year)!;
 
+    const expectedAmount = Math.round(
+      hovered.series === 'Interest' ? expectedYear.interest : expectedYear.principal,
+    );
+    const expectedTotal = Math.round(expectedYear.totalPayment);
+
     const chart = emiPage.barChart;
-    await expect(chart.tooltip).toBeVisible();
-    await expect(chart.tooltip).toContainText(`Year : ${hovered.year}`);
+    // Retrying assertion on the whole tooltip, built from the oracle,
+    // e.g. "Year : 2028Interest : ₹ 91,948Total Payment : ₹ 2,66,933".
+    await expect(chart.tooltip).toHaveText(
+      new RegExp(
+        `^\\s*Year : ${hovered.year}\\s*${hovered.series} : ₹ ${formatInr(expectedAmount)}` +
+          `\\s*Total Payment : ₹ ${formatInr(expectedTotal)}\\s*$`,
+      ),
+    );
     const tooltipText = (await chart.tooltip.textContent()) ?? '';
     const tooltip = BarChart.parseTooltip(tooltipText);
 
@@ -122,13 +149,12 @@ Then(
       contentType: 'application/json',
     });
 
+    // Same check on the parsed numbers: guards against formatting-only matches.
     expect(tooltip).toEqual({
       year: hovered.year,
       series: hovered.series,
-      amount: Math.round(
-        hovered.series === 'Interest' ? expectedYear.interest : expectedYear.principal,
-      ),
-      totalPayment: Math.round(expectedYear.totalPayment),
+      amount: expectedAmount,
+      totalPayment: expectedTotal,
     });
     expect(tooltip.amount).toBeGreaterThan(0);
   },
