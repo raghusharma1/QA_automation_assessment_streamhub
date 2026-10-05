@@ -1,0 +1,66 @@
+{
+  "_comment": "Batting innings for the streak scenario, on top of api/data/players.json and matches.json. Illustrative sample data, not official statistics. Each player's innings form one edge case (sql/README.md).",
+  "extraMatches": [
+    {
+      "_comment": "Previous season, just before the 2024 opener: must never start or extend a 2024 streak.",
+      "id": 1001,
+      "season": 2023,
+      "date": "2023-05-21",
+      "stage": "LEAGUE",
+      "venue": "M. Chinnaswamy Stadium",
+      "city": "Bengaluru",
+      "homeTeamId": "RCB",
+      "awayTeamId": "GT",
+      "winnerTeamId": "GT"
+    }
+  ],
+  "innings": [
+    { "matchId": 1001, "playerId": 1, "runs": 101, "balls": 61, "notOut": true },
+    { "matchId": 1, "playerId": 1, "runs": 45, "balls": 32, "notOut": false },
+    { "matchId": 4, "playerId": 1, "runs": 30, "balls": 22, "notOut": false },
+    { "matchId": 12, "playerId": 1, "runs": 77, "balls": 49, "notOut": false },
+    { "matchId": 13, "playerId": 1, "runs": 52, "balls": 36, "notOut": false },
+    { "matchId": 15, "playerId": 1, "runs": 61, "balls": 40, "notOut": true },
+    { "matchId": 20, "playerId": 1, "runs": 12, "balls": 10, "notOut": false },
+    { "matchId": 22, "playerId": 1, "runs": 33, "balls": 24, "notOut": false },
+
+    { "matchId": 1, "playerId": 2, "runs": 35, "balls": 23, "notOut": false },
+    { "matchId": 4, "playerId": 2, "runs": 31, "balls": 20, "notOut": false },
+    { "matchId": 12, "playerId": 2, "runs": 62, "balls": 37, "notOut": false },
+    { "matchId": 13, "playerId": 2, "runs": 9, "balls": 8, "notOut": false },
+    { "matchId": 15, "playerId": 2, "runs": 44, "balls": 28, "notOut": false },
+    { "matchId": 20, "playerId": 2, "runs": 54, "balls": 39, "notOut": false },
+    { "matchId": 22, "playerId": 2, "runs": 40, "balls": 26, "notOut": false },
+
+    { "matchId": 1, "playerId": 5, "runs": 15, "balls": 15, "notOut": false },
+    { "matchId": 14, "playerId": 5, "runs": 108, "balls": 60, "notOut": true },
+    { "matchId": 16, "playerId": 5, "runs": 62, "balls": 48, "notOut": false },
+    { "matchId": 18, "playerId": 5, "runs": 42, "balls": 41, "notOut": false },
+    { "matchId": 20, "playerId": 5, "runs": 0, "balls": 1, "notOut": false },
+
+    { "matchId": 6, "playerId": 23, "runs": 82, "balls": 52, "notOut": true },
+    { "matchId": 8, "playerId": 23, "runs": 38, "balls": 26, "notOut": false },
+    { "matchId": 18, "playerId": 23, "runs": 29, "balls": 21, "notOut": false },
+    { "matchId": 22, "playerId": 23, "runs": 47, "balls": 33, "notOut": false },
+    { "matchId": 23, "playerId": 23, "runs": 33, "balls": 25, "notOut": false },
+
+    { "matchId": 2, "playerId": 19, "runs": 62, "balls": 32, "notOut": false },
+    { "matchId": 5, "playerId": 19, "runs": 89, "balls": 41, "notOut": false },
+    { "matchId": 12, "playerId": 19, "runs": 25, "balls": 12, "notOut": false },
+    { "matchId": 21, "playerId": 19, "runs": 102, "balls": 41, "notOut": false },
+    { "matchId": 23, "playerId": 19, "runs": 34, "balls": 28, "notOut": false },
+    { "matchId": 24, "playerId": 19, "runs": 0, "balls": 1, "notOut": false },
+
+    { "matchId": 2, "playerId": 15, "runs": 64, "balls": 25, "notOut": true },
+    { "matchId": 9, "playerId": 15, "runs": 41, "balls": 19, "notOut": false },
+    { "matchId": 17, "playerId": 15, "runs": 37, "balls": 20, "notOut": false },
+    { "matchId": 21, "playerId": 15, "runs": 35, "balls": 22, "notOut": true },
+
+    { "matchId": 2, "playerId": 14, "runs": 2, "balls": 3, "notOut": false },
+    { "matchId": 9, "playerId": 14, "runs": 85, "balls": 39, "notOut": false },
+    { "matchId": 13, "playerId": 14, "runs": 10, "balls": 7, "notOut": false },
+    { "matchId": 17, "playerId": 14, "runs": 81, "balls": 39, "notOut": false },
+    { "matchId": 21, "playerId": 14, "runs": 39, "balls": 26, "notOut": false },
+    { "matchId": 24, "playerId": 14, "runs": 31, "balls": 22, "notOut": false }
+  ]
+}

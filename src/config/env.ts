@@ -50,6 +50,8 @@ const EnvSchema = z.object({
     .optional()
     .transform((v) => (v ? v : undefined)),
   HEAL_MODEL: z.string().min(1).default('claude-sonnet-5-5'),
+  // When true, SQL tests (re)write their screenshots and raw outputs into sql/results/.
+  SQL_EVIDENCE: z.stringbool().default(false),
 });
 
 const parsed = EnvSchema.safeParse({ ...process.env, TEST_ENV: testEnv });

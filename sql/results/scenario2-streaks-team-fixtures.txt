@@ -1,0 +1,10 @@
+Scenario 2 alternative: consecutive team matches played
+
+player_name     | streak_start | streak_matches | streak_end
+----------------+--------------+----------------+-----------
+Faf du Plessis  | 2024-03-22   | 3              | 2024-04-15
+Faf du Plessis  | 2024-04-28   | 3              | 2024-05-22
+Ruturaj Gaikwad | 2024-04-23   | 3              | 2024-05-12
+Sunil Narine    | 2024-05-05   | 3              | 2024-05-26
+Virat Kohli     | 2024-03-22   | 5              | 2024-04-28
+(5 rows)

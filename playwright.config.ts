@@ -50,6 +50,13 @@ export default defineConfig({
       testDir: 'tests/unit',
     },
     {
+      // SQL scenarios (Section B4) on PGlite: expected rows + mutation checks. A browser is
+      // used only to render the result tables as screenshots.
+      name: 'sql',
+      testDir: 'tests/sql',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1100, height: 700 } },
+    },
+    {
       // UI tests against the live EMI calculator (Section B3).
       ...defineBddProject({
         name: 'ui',

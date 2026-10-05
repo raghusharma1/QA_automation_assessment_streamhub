@@ -9,15 +9,18 @@
   "scripts": {
     "api:start": "tsx api/src/server.ts",
     "api:dev": "tsx watch api/src/server.ts",
+    "sql:seed": "tsx sql/scripts/build-ipl-seed.ts",
+    "sql:evidence": "cross-env SQL_EVIDENCE=true playwright test --project=sql",
     "bddgen": "bddgen",
-    "test": "bddgen && playwright test --project=unit --project=api --project=ui",
+    "test": "bddgen && playwright test --project=unit --project=sql --project=api --project=ui",
     "test:ui": "bddgen && playwright test --project=ui",
     "test:api": "bddgen && playwright test --project=api",
     "test:unit": "playwright test --project=unit",
+    "test:sql": "playwright test --project=sql",
     "test:smoke": "bddgen && playwright test --project=api --project=ui --grep @smoke",
     "test:broken": "bddgen && playwright test --project=self-healing",
     "test:headed": "bddgen && playwright test --project=ui --headed",
-    "test:ci": "cross-env-shell TEST_ENV=ci \"bddgen && playwright test --project=unit --project=api --project=ui\"",
+    "test:ci": "cross-env-shell TEST_ENV=ci \"bddgen && playwright test --project=unit --project=sql --project=api --project=ui\"",
     "report": "playwright show-report reports/playwright-html",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
@@ -26,6 +29,7 @@
     "check": "npm run typecheck && npm run lint && npm run format:check"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.63.0",
     "@types/node": "22.20.5",

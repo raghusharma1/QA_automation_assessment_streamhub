@@ -1,0 +1,11 @@
+Scenario 2: LAG/LEAD technique (name + start date)
+
+player_name     | streak_start
+----------------+-------------
+Andre Russell   | 2024-03-23  
+Faf du Plessis  | 2024-03-22  
+Faf du Plessis  | 2024-04-28  
+Ruturaj Gaikwad | 2024-04-23  
+Sunil Narine    | 2024-05-05  
+Virat Kohli     | 2024-03-22  
+(6 rows)
