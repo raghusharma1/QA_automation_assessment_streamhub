@@ -19,6 +19,7 @@
     "api",
     "sql",
     "self-heal",
+    "scripts",
     "playwright.config.ts",
     "playwright.self-heal.config.ts"
   ],
