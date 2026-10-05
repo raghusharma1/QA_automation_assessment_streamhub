@@ -11,10 +11,20 @@ export default defineConfig([
     'node_modules/**',
     '.playwright-cli/**',
     '.claude/**',
-    'sql/**/*.mjs',
   ]),
   js.configs.recommended,
-  ...tseslint.configs.recommended,
+  // Type-aware rules: catch floating promises (a missing `await` on a Playwright call is the most
+  // common silent bug in step code) and misused promises.
+  ...tseslint.configs.recommendedTypeChecked,
+  {
+    languageOptions: {
+      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+    },
+  },
+  {
+    files: ['**/*.mjs', '**/*.js'],
+    extends: [tseslint.configs.disableTypeChecked],
+  },
   {
     files: ['src/**/*.ts'],
     extends: [playwright.configs['flat/recommended']],

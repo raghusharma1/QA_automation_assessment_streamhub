@@ -1,7 +1,16 @@
 import type { Locator, Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
-export type LoanType = 'Home Loan' | 'Personal Loan' | 'Car Loan';
+export const LOAN_TYPES = ['Home Loan', 'Personal Loan', 'Car Loan'] as const;
+export type LoanType = (typeof LOAN_TYPES)[number];
+
+/** Narrow free text from a feature file to a LoanType, failing loudly on typos. */
+export function toLoanType(value: string): LoanType {
+  const match = LOAN_TYPES.find((t) => t === value.trim());
+  if (!match)
+    throw new Error(`Unknown loan type "${value}". Expected one of: ${LOAN_TYPES.join(', ')}`);
+  return match;
+}
 
 /**
  * https://emicalculator.net/ (single page; loan tabs switch in place without changing the URL).

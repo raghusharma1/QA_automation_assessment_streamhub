@@ -1,10 +1,16 @@
 import { createBdd, test as base } from 'playwright-bdd';
 import { env } from '../config/env';
-import { EmiCalculatorPage } from '../pages/EmiCalculatorPage';
+import { EmiCalculatorPage, type LoanType } from '../pages/EmiCalculatorPage';
 import { isBlockedHost } from '../support/third-party-blocklist';
 
-/** Per-scenario scratchpad for passing values between steps (replaces Cucumber's World). */
-export type ScenarioContext = Record<string, unknown>;
+/**
+ * Typed per-scenario state shared between steps (replaces Cucumber's World).
+ * Fields are optional because each scenario fills only what it needs; add new ones here
+ * rather than casting in step files.
+ */
+export interface ScenarioContext {
+  loanType?: LoanType;
+}
 
 type Fixtures = {
   emiPage: EmiCalculatorPage;

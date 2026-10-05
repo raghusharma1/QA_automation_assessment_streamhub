@@ -14,9 +14,12 @@ import { z } from 'zod';
 
 const ENVIRONMENTS = ['local', 'ci'] as const;
 const testEnv = process.env.TEST_ENV ?? 'local';
+// Resolve from this file, not process.cwd(), so IDE runners and subfolder invocations still
+// load the right files.
+const repoRoot = path.resolve(__dirname, '..', '..');
 
 dotenv.config({
-  path: [path.resolve(process.cwd(), '.env'), path.resolve(process.cwd(), 'env', `${testEnv}.env`)],
+  path: [path.join(repoRoot, '.env'), path.join(repoRoot, 'env', `${testEnv}.env`)],
   quiet: true,
 });
 
@@ -31,7 +34,8 @@ const EnvSchema = z.object({
   TEST_ENV: z.enum(ENVIRONMENTS),
   EMI_BASE_URL: z.url(),
   API_PORT: z.coerce.number().int().min(1).max(65535),
-  API_BASE_URL: z.url(),
+  // Optional override (e.g. a deployed API). Defaults to http://localhost:<API_PORT>.
+  API_BASE_URL: z.url().optional(),
   HEADLESS: z.stringbool().default(true),
   WORKERS: optionalInt(z.int().positive()),
   RETRIES: optionalInt(z.int().min(0)),
@@ -56,5 +60,8 @@ if (!parsed.success) {
   );
 }
 
-export const env = Object.freeze(parsed.data);
+export const env = Object.freeze({
+  ...parsed.data,
+  API_BASE_URL: parsed.data.API_BASE_URL ?? `http://localhost:${parsed.data.API_PORT}`,
+});
 export type Env = typeof env;
