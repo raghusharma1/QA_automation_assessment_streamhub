@@ -37,6 +37,34 @@ export default defineConfig([
       'playwright/no-wait-for-timeout': 'error',
       'playwright/prefer-web-first-assertions': 'error',
       'playwright/no-force-option': 'error',
+      // Tests must not import the system under test: contracts in src/api-clients are written
+      // independently, so a schema bug in api/ can't make the API and its tests agree.
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '(^|/)api/(src|data)(/|$)',
+              message:
+                'Tests must not import the API under test; use src/api-clients/contracts.ts.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // ...and the API must not depend on the test framework.
+    files: ['api/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { regex: '(^|/)src/', message: 'The API must not import test-framework code.' },
+          ],
+        },
+      ],
     },
   },
   prettier,

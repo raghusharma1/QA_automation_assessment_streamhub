@@ -1,4 +1,5 @@
 import { createBdd, test as base } from 'playwright-bdd';
+import { ApiClient, IplApi, type ApiResult } from '../api-clients/ApiClient';
 import { env } from '../config/env';
 import { EmiCalculatorPage, type LoanType } from '../pages/EmiCalculatorPage';
 import type { BarSeries } from '../pages/components/BarChart';
@@ -18,6 +19,8 @@ export interface ScenarioContext {
   schedule?: { start: YearMonth; years: YearlyAmortization[] };
   /** The bar a step hovered, so a later step can check its tooltip. */
   hoveredBar?: { year: number; series: BarSeries };
+  /** Last API response received, for the Then steps that inspect it. */
+  response?: ApiResult;
 }
 
 /** Read the loan a previous step entered, failing with a clear message if it is missing. */
@@ -27,8 +30,15 @@ export function requireLoan(ctx: ScenarioContext): NonNullable<ScenarioContext['
   return ctx.loan;
 }
 
+/** Read the last API response, failing with a clear message if no request was sent. */
+export function requireResponse(ctx: ScenarioContext): ApiResult {
+  if (!ctx.response) throw new Error('No API request sent yet in this scenario');
+  return ctx.response;
+}
+
 type Fixtures = {
   emiPage: EmiCalculatorPage;
+  api: IplApi;
   ctx: ScenarioContext;
 };
 
@@ -43,6 +53,10 @@ export const test = base.extend<Fixtures>({
       );
     }
     await use(page);
+  },
+  // Uses only the `request` fixture, so API scenarios never launch a browser.
+  api: async ({ request }, use, testInfo) => {
+    await use(new IplApi(new ApiClient(request, testInfo)));
   },
   emiPage: async ({ page }, use) => {
     await use(new EmiCalculatorPage(page));

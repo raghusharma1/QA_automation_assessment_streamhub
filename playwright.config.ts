@@ -63,5 +63,31 @@ export default defineConfig({
         timezoneId: 'Asia/Kolkata',
       },
     },
+    {
+      // API tests against our own IPL stats API (Section B1/B2). No browser is launched.
+      ...defineBddProject({
+        name: 'api',
+        features: 'features/api/**/*.feature',
+        steps: ['src/steps/api/**/*.ts', 'src/fixtures/**/*.ts'],
+      }),
+      use: {
+        // Trailing slash so relative request paths resolve under any path prefix in the URL.
+        baseURL: `${env.API_BASE_URL.replace(/\/$/, '')}/`,
+        extraHTTPHeaders: { Accept: 'application/json' },
+      },
+    },
   ],
+
+  // Starts the API before tests and stops it afterwards. Locally, an API you already started
+  // with `npm run api:dev` is reused. It starts for every run (well under a second), so nobody
+  // has to remember to start it before the API tests.
+  webServer: {
+    command: 'npm run api:start',
+    url: `${env.API_BASE_URL.replace(/\/$/, '')}/health`,
+    env: { API_PORT: String(env.API_PORT) },
+    reuseExistingServer: !isCI,
+    timeout: 30_000,
+    stdout: 'ignore',
+    stderr: 'pipe',
+  },
 });
