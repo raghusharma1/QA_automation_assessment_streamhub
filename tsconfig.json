@@ -13,6 +13,14 @@
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["src", "tests", "api", "sql", "self-heal", "playwright.config.ts"],
+  "include": [
+    "src",
+    "tests",
+    "api",
+    "sql",
+    "self-heal",
+    "playwright.config.ts",
+    "playwright.self-heal.config.ts"
+  ],
   "exclude": ["node_modules", ".features-gen", "reports"]
 }

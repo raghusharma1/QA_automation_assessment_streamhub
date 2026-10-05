@@ -4,6 +4,7 @@
 # Dependencies / generated
 node_modules/
 .features-gen/
+.features-gen-self-heal/
 blob-report/
 playwright/.cache/
 

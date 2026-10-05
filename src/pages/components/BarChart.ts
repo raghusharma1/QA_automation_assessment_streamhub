@@ -106,6 +106,7 @@ export class BarChart {
       { id: BarChart.containerId, year, series },
     );
     if (index < 0) throw new Error(`No ${series} bar for year ${year} in the chart`);
+    // locator-lint-allow: index resolved from the chart data (year + series) just above, not hardcoded
     return this.barSegments.nth(index);
   }
 

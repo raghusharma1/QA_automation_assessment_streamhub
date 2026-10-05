@@ -7,6 +7,7 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 export default defineConfig([
   globalIgnores([
     '.features-gen/**',
+    '.features-gen-self-heal/**',
     'reports/**',
     'node_modules/**',
     '.playwright-cli/**',

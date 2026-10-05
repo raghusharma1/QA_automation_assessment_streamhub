@@ -2,6 +2,7 @@ import { createBdd, test as base } from 'playwright-bdd';
 import { ApiClient, IplApi, type ApiResult } from '../api-clients/ApiClient';
 import { env } from '../config/env';
 import { EmiCalculatorPage, type LoanType } from '../pages/EmiCalculatorPage';
+import { LegacyEmiCalculatorPage } from '../pages/legacy/LegacyEmiCalculatorPage';
 import type { BarSeries } from '../pages/components/BarChart';
 import type { LoanBreakdown, LoanInput, YearlyAmortization, YearMonth } from '../support/emi-math';
 import { isBlockedHost } from '../support/third-party-blocklist';
@@ -38,6 +39,8 @@ export function requireResponse(ctx: ScenarioContext): ApiResult {
 
 type Fixtures = {
   emiPage: EmiCalculatorPage;
+  /** Deliberately broken locators for the self-healing exercise (SELF_HEALING.md). */
+  legacyPage: LegacyEmiCalculatorPage;
   api: IplApi;
   ctx: ScenarioContext;
 };
@@ -57,6 +60,9 @@ export const test = base.extend<Fixtures>({
   // Uses only the `request` fixture, so API scenarios never launch a browser.
   api: async ({ request }, use, testInfo) => {
     await use(new IplApi(new ApiClient(request, testInfo)));
+  },
+  legacyPage: async ({ page }, use) => {
+    await use(new LegacyEmiCalculatorPage(page));
   },
   emiPage: async ({ page }, use) => {
     await use(new EmiCalculatorPage(page));

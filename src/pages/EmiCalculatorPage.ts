@@ -67,7 +67,7 @@ export class EmiCalculatorPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.heading = page.getByRole('heading', { level: 1, name: /EMI Calculator/ });
+    this.heading = page.getByRole('heading', { level: 1, name: /^EMI Calculator\b/ });
     this.form = new LoanForm(page);
     this.pieChart = new PieChart(page);
     this.barChart = new BarChart(page);
@@ -78,8 +78,11 @@ export class EmiCalculatorPage extends BasePage {
   }
 
   /**
-   * Loan product tab. `exact: true` matters: without it, the 'Personal Loan' role query matches
-   * 2 elements (substring match on accessible names) and fails Playwright's strict mode.
+   * Loan product tab. `exact: true` is deliberate. Accessible names match as case-insensitive
+   * substrings by default, and the page has 15 links whose names contain "Loan" (e.g. "Home Loan
+   * EMI Calculator with Prepayments…"). Today "Personal Loan" happens to match one of them, but
+   * one recon session saw it resolve to 2 elements (not reproducible since). Exact matching keeps
+   * the locator unique if the site adds a similarly named link.
    */
   loanTab(type: LoanType): Locator {
     return this.page.getByRole('link', { name: type, exact: true });

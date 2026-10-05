@@ -50,6 +50,8 @@ const EnvSchema = z.object({
     .optional()
     .transform((v) => (v ? v : undefined)),
   HEAL_MODEL: z.string().min(1).default('claude-sonnet-5-5'),
+  // Forces a model adapter. Default: replay a recorded cassette if present, else Claude Code.
+  HEAL_LLM: z.enum(['claude-code', 'anthropic', 'replay']).optional(),
   // When true, SQL tests (re)write their screenshots and raw outputs into sql/results/.
   SQL_EVIDENCE: z.stringbool().default(false),
 });
