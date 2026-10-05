@@ -24,7 +24,7 @@ import { withPatch } from './patch';
 import type { Target } from './targets';
 
 export interface GateResult {
-  gate: 'stable' | 'unique' | 'specific' | 'visible' | 'role' | 'rerun';
+  gate: 'grounded' | 'stable' | 'unique' | 'specific' | 'visible' | 'role' | 'rerun';
   passed: boolean;
   detail: string;
   /** The gate was deliberately not run (e.g. a higher-ranked candidate was already accepted). */
@@ -85,6 +85,33 @@ export function stabilityGate(candidate: Candidate, asserted: string[] = []): Ga
   return { gate: 'stable', passed: true, detail: 'no data-dependent text' };
 }
 
+/**
+ * Gate 1a (static): grounded in evidence. Everything a candidate identifies its element by must
+ * appear in what the model was shown: the accessibility snapshot, the broken locator or the
+ * failure output. The prompt asks for this; this gate ENFORCES it. In the second live run the
+ * model proposed `#emiamount p` and wrote that the id was "my recollection of the site's markup
+ * and is not in the snapshot": a public site it had seen in training. It happened to work, but
+ * on a private app the same behaviour invents ids, so ungrounded candidates are rejected even when
+ * they would pass the live checks.
+ */
+export function groundingGate(candidate: Candidate, evidence: string): GateResult {
+  const haystack = evidence.toLowerCase();
+  const needles =
+    candidate.strategy === 'scopedId'
+      ? [candidate.id]
+      : candidate.strategy === 'testId'
+        ? [candidate.testId]
+        : [identifyingText(candidate)];
+  const missing = needles.find((n) => !haystack.includes(n.toLowerCase()));
+  return missing
+    ? {
+        gate: 'grounded',
+        passed: false,
+        detail: `"${missing}" does not appear in the snapshot, broken locator or failure output`,
+      }
+    : { gate: 'grounded', passed: true, detail: 'found in the evidence shown to the model' };
+}
+
 /** The same candidate with exact matching, if it has a non-exact name/label/text/placeholder. */
 export function exactVariant(c: Candidate): Candidate | undefined {
   return 'exact' in c && !c.exact ? { ...c, exact: true } : undefined;
@@ -101,9 +128,12 @@ export async function checkOnLivePage(
   candidate: Candidate,
   target: Target,
   asserted: string[] = [],
+  evidence?: string,
 ): Promise<GateResult[]> {
+  const grounded = evidence === undefined ? undefined : groundingGate(candidate, evidence);
+  if (grounded && !grounded.passed) return [grounded];
   const stable = stabilityGate(candidate, asserted);
-  if (!stable.passed) return [stable];
+  if (!stable.passed) return grounded ? [grounded, stable] : [stable];
   const context = await browser.newContext({ ...devices['Desktop Chrome'], locale: 'en-IN' });
   await context.route(
     (u) => isBlockedHost(u.href),
@@ -113,7 +143,7 @@ export async function checkOnLivePage(
   try {
     await page.goto(env.EMI_BASE_URL);
     const locator = buildLocator(page, candidate);
-    const results: GateResult[] = [stable];
+    const results: GateResult[] = grounded ? [grounded, stable] : [stable];
 
     const count = await locator.count();
     results.push({ gate: 'unique', passed: count === 1, detail: `${count} element(s) matched` });

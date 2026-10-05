@@ -105,6 +105,8 @@ async function main() {
       outcome.target = target;
 
       const asserted = assertedValues(failure.message);
+      // What the model is shown, and therefore all a candidate may be built from.
+      const evidence = [failure.snapshot, target.expression, failure.message].join('\n');
       const basePrompt = buildPrompt(failure, classification, target);
       let prompt = basePrompt;
       // Bounded repair loop: if no candidate survives validation, the gate results go back to the
@@ -128,7 +130,7 @@ async function main() {
         for (let next = queue.shift(); next; next = queue.shift()) {
           const { candidate } = next;
           const code = toCode(candidate);
-          const gates = await checkOnLivePage(browser, candidate, target, asserted);
+          const gates = await checkOnLivePage(browser, candidate, target, asserted, evidence);
           const exact = exactVariant(candidate);
           if (exact && gates.some((g) => g.gate === 'specific' && !g.passed)) {
             queue.unshift({ candidate: exact, autoExact: true });
@@ -211,8 +213,8 @@ async function writeReport(outcomes: FailureOutcome[]) {
     if (o.candidates.length) {
       lines.push(
         '',
-        '| # | Round | Candidate | stable | unique | exact preferred | visible | role fits | re-run ×3 | Verdict |',
-        '|---|---|---|---|---|---|---|---|---|---|',
+        '| # | Round | Candidate | grounded | stable | unique | exact preferred | visible | role fits | re-run ×3 | Verdict |',
+        '|---|---|---|---|---|---|---|---|---|---|---|',
       );
       o.candidates.forEach((c, i) => {
         const g = (name: GateResult['gate']) => {
@@ -226,7 +228,7 @@ async function writeReport(outcomes: FailureOutcome[]) {
             ? 'not needed'
             : 'rejected';
         lines.push(
-          `| ${i + 1} | ${c.round} | \`${c.code}\` | ${g('stable')} | ${g('unique')} | ${g('specific')} | ${g('visible')} | ${g('role')} | ${g('rerun')} | ${verdict} |`,
+          `| ${i + 1} | ${c.round} | \`${c.code}\` | ${g('grounded')} | ${g('stable')} | ${g('unique')} | ${g('specific')} | ${g('visible')} | ${g('role')} | ${g('rerun')} | ${verdict} |`,
         );
       });
       lines.push('', '<details><summary>Model rationale</summary>', '');

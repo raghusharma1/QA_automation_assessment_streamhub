@@ -13,7 +13,12 @@ import { classify, extractSnapshot } from '../../self-heal/src/failures';
 import { lintSource } from '../../self-heal/src/lint-locators';
 import { promptFingerprint } from '../../self-heal/src/llm';
 import { makeDiff, patchedSource } from '../../self-heal/src/patch';
-import { assertedValues, exactVariant, stabilityGate } from '../../self-heal/src/validate';
+import {
+  assertedValues,
+  exactVariant,
+  groundingGate,
+  stabilityGate,
+} from '../../self-heal/src/validate';
 import { findUsages, parseTargets, type Target } from '../../self-heal/src/targets';
 
 // Real failure messages from `npm run test:broken` (trimmed).
@@ -268,6 +273,32 @@ test.describe('self-heal: specificity, data and replay fingerprints', () => {
     expect(
       stabilityGate({ strategy: 'text', text: 'Paid', exact: true, rationale: 'r' }, ['Paid'])
         .passed,
+    ).toBe(false);
+  });
+
+  test('grounding gate rejects candidates built from outside the evidence (e.g. model memory)', () => {
+    const evidence = `- heading "Loan EMI" [level=4]\n- paragraph: ₹44,986\npage.locator('#emicalculatordashboard > div > p')`;
+    // From the second live run: "my recollection of the site's markup", not in the snapshot.
+    expect(
+      groundingGate(
+        { strategy: 'scopedId', id: 'emiamount', childTag: 'p', rationale: 'r' },
+        evidence,
+      ).passed,
+    ).toBe(false);
+    expect(
+      groundingGate(
+        { strategy: 'scopedId', id: 'emicalculatordashboard', rationale: 'r' },
+        evidence,
+      ).passed,
+    ).toBe(true);
+    expect(
+      groundingGate(
+        { strategy: 'role', role: 'heading', name: 'Loan EMI', exact: true, rationale: 'r' },
+        evidence,
+      ).passed,
+    ).toBe(true);
+    expect(
+      groundingGate({ strategy: 'testId', testId: 'emi-value', rationale: 'r' }, evidence).passed,
     ).toBe(false);
   });
 

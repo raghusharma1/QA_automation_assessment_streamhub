@@ -1,10 +1,16 @@
+# Proposed by `npm run heal` for interestRateInput ("Interest rate input"). NOT applied: review, then `git apply` this file.
+diff --git a/src/pages/legacy/LegacyEmiCalculatorPage.ts b/src/pages/legacy/LegacyEmiCalculatorPage.ts
 --- a/src/pages/legacy/LegacyEmiCalculatorPage.ts
-+++ b/src/pages/legacy/LegacyEmiCalculatorPage.ts (proposed, not applied)
-@@ -44,5 +44,2 @@ interestRateInput: Interest rate input
--    this.interestRateInput = page
++++ b/src/pages/legacy/LegacyEmiCalculatorPage.ts
+@@ -43,9 +43,7 @@ export class LegacyEmiCalculatorPage extends BasePage {
+       .describe('Personal Loan product tab');
+     this.loanAmountInput = page.locator('#loan-amount').describe('Home loan amount input');
+     this.interestRateInput = page
 -      .locator(
 -        'xpath=/html/body/div[1]/div/main/article/div[2]/div[1]/div/form/div[2]/div[1]/input',
 -      )
--      .describe('Interest rate input');
-+    this.interestRateInput = page.getByLabel('Interest rate')
-+      .describe('Interest rate input');
++      .getByRole('textbox', { name: 'Interest Rate', exact: true })
+       .describe('Interest rate input');
+     this.monthlyEmiValue = page
+       .locator('#emicalculatordashboard > div:nth-child(2) > div:nth-child(1) > p')
+

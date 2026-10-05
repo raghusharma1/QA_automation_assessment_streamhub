@@ -1,8 +1,14 @@
+# Proposed by `npm run heal` for emiHeading ("Loan EMI heading"). NOT applied: review, then `git apply` this file.
+diff --git a/src/pages/legacy/LegacyEmiCalculatorPage.ts b/src/pages/legacy/LegacyEmiCalculatorPage.ts
 --- a/src/pages/legacy/LegacyEmiCalculatorPage.ts
-+++ b/src/pages/legacy/LegacyEmiCalculatorPage.ts (proposed, not applied)
-@@ -52,3 +52,2 @@ emiHeading: Loan EMI heading
--    this.emiHeading = page
++++ b/src/pages/legacy/LegacyEmiCalculatorPage.ts
+@@ -51,7 +51,7 @@ export class LegacyEmiCalculatorPage extends BasePage {
+       .locator('#emicalculatordashboard > div:nth-child(2) > div:nth-child(1) > p')
+       .describe('Monthly EMI amount');
+     this.emiHeading = page
 -      .getByRole('heading', { name: 'Monthly EMI' })
--      .describe('Loan EMI heading');
-+    this.emiHeading = page.getByRole('heading', { name: 'Loan EMI', exact: true })
-+      .describe('Loan EMI heading');
++      .getByRole('heading', { name: 'Loan EMI', exact: true })
+       .describe('Loan EMI heading');
+   }
+ }
+

@@ -1,8 +1,14 @@
+# Proposed by `npm run heal` for personalLoanTab ("Personal Loan product tab"). NOT applied: review, then `git apply` this file.
+diff --git a/src/pages/legacy/LegacyEmiCalculatorPage.ts b/src/pages/legacy/LegacyEmiCalculatorPage.ts
 --- a/src/pages/legacy/LegacyEmiCalculatorPage.ts
-+++ b/src/pages/legacy/LegacyEmiCalculatorPage.ts (proposed, not applied)
-@@ -40,3 +40,2 @@ personalLoanTab: Personal Loan product tab
--    this.personalLoanTab = page
++++ b/src/pages/legacy/LegacyEmiCalculatorPage.ts
+@@ -39,7 +39,7 @@ export class LegacyEmiCalculatorPage extends BasePage {
+   constructor(page: Page) {
+     super(page);
+     this.personalLoanTab = page
 -      .getByRole('link', { name: /Loan/ })
--      .describe('Personal Loan product tab');
-+    this.personalLoanTab = page.getByRole('link', { name: 'Personal Loan', exact: true })
-+      .describe('Personal Loan product tab');
++      .getByRole('link', { name: 'Personal Loan', exact: true })
+       .describe('Personal Loan product tab');
+     this.loanAmountInput = page.locator('#loan-amount').describe('Home loan amount input');
+     this.interestRateInput = page
+
