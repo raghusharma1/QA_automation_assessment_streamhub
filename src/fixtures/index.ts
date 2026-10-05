@@ -1,7 +1,8 @@
 import { createBdd, test as base } from 'playwright-bdd';
 import { env } from '../config/env';
 import { EmiCalculatorPage, type LoanType } from '../pages/EmiCalculatorPage';
-import type { LoanBreakdown, LoanInput } from '../support/emi-math';
+import type { BarSeries } from '../pages/components/BarChart';
+import type { LoanBreakdown, LoanInput, YearlyAmortization, YearMonth } from '../support/emi-math';
 import { isBlockedHost } from '../support/third-party-blocklist';
 
 /**
@@ -13,6 +14,10 @@ export interface ScenarioContext {
   loanType?: LoanType;
   /** Loan entered in the UI and the independently computed expectation for it. */
   loan?: { input: LoanInput; expected: LoanBreakdown };
+  /** First instalment month chosen in the schedule widget, and the oracle's yearly schedule. */
+  schedule?: { start: YearMonth; years: YearlyAmortization[] };
+  /** The bar a step hovered, so a later step can check its tooltip. */
+  hoveredBar?: { year: number; series: BarSeries };
 }
 
 /** Read the loan a previous step entered, failing with a clear message if it is missing. */

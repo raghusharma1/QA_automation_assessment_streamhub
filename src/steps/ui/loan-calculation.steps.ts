@@ -24,6 +24,18 @@ When(
   },
 );
 
+When(
+  'I use the sliders to set a loan amount of {word}, an interest rate of {float}% and a tenure of {int} years',
+  async ({ emiPage, ctx }, amount: string, rate: number, years: number) => {
+    if (!ctx.loanType) throw new Error('Select a loan tab before using the sliders');
+    const principal = parseAmountShorthand(amount);
+    await emiPage.setWithSliders(ctx.loanType, { principal, annualRatePct: rate, years });
+
+    const input = { principal, annualRatePct: rate, months: yearsToMonths(years) };
+    ctx.loan = { input, expected: calculateEmi(input) };
+  },
+);
+
 Then('the displayed EMI matches my independently calculated EMI', async ({ emiPage, ctx }) => {
   const { expected } = requireLoan(ctx);
   // Web-first assertion: retries until the site has finished recalculating (recon showed a

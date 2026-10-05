@@ -1,7 +1,32 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { BasePage } from './BasePage';
-import { LoanForm } from './components/LoanForm';
+import { LoanForm, type LoanFormValues } from './components/LoanForm';
 import { PieChart } from './components/PieChart';
+import { BarChart } from './components/BarChart';
+import { MonthPicker } from './components/MonthPicker';
+import { SliderControl, type SliderRange } from './components/SliderControl';
+import { formatInr, parseInr } from '../support/inr';
+
+/**
+ * Slider ranges per product, as observed in live recon (docs/research/06-live-recon-verified.md).
+ * Used only to aim the initial drag: the keyboard nudge reads the real value from the input and
+ * corrects any error, so a small change to a range on the site can't produce a wrong value.
+ */
+export const SLIDER_RANGES: Partial<
+  Record<LoanType, { amount: SliderRange; interest: SliderRange; tenureYears: SliderRange }>
+> = {
+  'Home Loan': {
+    amount: { min: 0, max: 20_000_000, step: 100_000 },
+    interest: { min: 5, max: 20, step: 0.25 },
+    tenureYears: { min: 0, max: 30, step: 0.5 },
+  },
+  'Personal Loan': {
+    amount: { min: 0, max: 3_000_000, step: 10_000 },
+    interest: { min: 5, max: 25, step: 0.25 },
+    tenureYears: { min: 0, max: 5, step: 0.25 },
+  },
+  // Car Loan ranges were not measured, so slider input is not supported for it.
+};
 
 export const LOAN_TYPES = ['Home Loan', 'Personal Loan', 'Car Loan'] as const;
 export type LoanType = (typeof LOAN_TYPES)[number];
@@ -28,6 +53,8 @@ export class EmiCalculatorPage extends BasePage {
   readonly heading: Locator;
   readonly form: LoanForm;
   readonly pieChart: PieChart;
+  readonly barChart: BarChart;
+  readonly scheduleStart: MonthPicker;
 
   /**
    * Result panel. Each figure is a <p> next to an <h4> ("Loan EMI", "Total Interest Payable",
@@ -43,6 +70,8 @@ export class EmiCalculatorPage extends BasePage {
     this.heading = page.getByRole('heading', { level: 1, name: /EMI Calculator/ });
     this.form = new LoanForm(page);
     this.pieChart = new PieChart(page);
+    this.barChart = new BarChart(page);
+    this.scheduleStart = new MonthPicker(page);
     this.emi = page.locator('#emiamount p');
     this.totalInterest = page.locator('#emitotalinterest p');
     this.totalPayment = page.locator('#emitotalamount p');
@@ -62,6 +91,24 @@ export class EmiCalculatorPage extends BasePage {
    */
   loanTabItem(type: LoanType): Locator {
     return this.page.getByRole('listitem').filter({ has: this.loanTab(type) });
+  }
+
+  /**
+   * Sets amount, interest and tenure by interacting with the three sliders (drag + keyboard),
+   * as TC2 requires, instead of typing into the inputs.
+   */
+  async setWithSliders(type: LoanType, values: LoanFormValues): Promise<void> {
+    const ranges = SLIDER_RANGES[type];
+    if (!ranges) throw new Error(`No measured slider ranges for "${type}"`);
+    const { form } = this;
+    const amount = new SliderControl(this.page, 'loanamountslider', form.amount(type), parseInr);
+    const interest = new SliderControl(this.page, 'loaninterestslider', form.interestRate, Number);
+    const tenure = new SliderControl(this.page, 'loantermslider', form.tenure, Number);
+
+    await expect(form.tenureInYears).toBeChecked();
+    await amount.setValue(values.principal, ranges.amount, formatInr(values.principal));
+    await interest.setValue(values.annualRatePct, ranges.interest, String(values.annualRatePct));
+    await tenure.setValue(values.years, ranges.tenureYears, String(values.years));
   }
 
   /**
