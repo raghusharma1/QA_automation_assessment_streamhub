@@ -1,0 +1,7 @@
+node_modules/
+.features-gen/
+reports/
+.playwright-cli/
+.claude/
+docs/research/
+package-lock.json

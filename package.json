@@ -1,0 +1,41 @@
+{
+  "name": "streamhub-qa-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright + Cucumber (playwright-bdd) framework: EMI calculator UI tests, IPL stats API + API tests, SQL scenarios, AI self-healing POC.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "bddgen": "bddgen",
+    "test": "bddgen && playwright test --project=ui",
+    "test:ui": "bddgen && playwright test --project=ui",
+    "test:api": "bddgen && playwright test --project=api",
+    "test:smoke": "bddgen && playwright test --project=ui --grep @smoke",
+    "test:broken": "bddgen && playwright test --project=self-healing",
+    "test:headed": "bddgen && playwright test --project=ui --headed",
+    "test:ci": "cross-env-shell TEST_ENV=ci \"bddgen && playwright test --project=ui\"",
+    "report": "playwright show-report reports/playwright-html",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.20.5",
+    "cross-env": "10.1.0",
+    "dotenv": "18.0.5",
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-playwright": "2.12.1",
+    "playwright-bdd": "9.2.1",
+    "prettier": "3.9.9",
+    "prettier-plugin-gherkin": "4.0.0",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.0",
+    "zod": "4.6.5"
+  }
+}
