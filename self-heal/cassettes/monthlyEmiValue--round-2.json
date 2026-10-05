@@ -1,0 +1,24 @@
+{
+  "target": "monthlyEmiValue--round-2",
+  "adapter": "claude-code",
+  "model": "claude-sonnet-5-5",
+  "recordedAt": "2026-10-05T16:03:56.215Z",
+  "promptSha256": "68d776d51eca846b89eeecc94b25218535ce7517d84bacb254ce72fdd5e84220",
+  "raw": {
+    "candidates": [
+      {
+        "strategy": "text",
+        "text": "44,986",
+        "exact": false,
+        "rationale": "No snapshot was available. The failure output shows the expected EMI value is ₹44,986. Matching the number as partial text avoids depending on the ₹ spacing and on the fragile nth-child path."
+      },
+      {
+        "strategy": "role",
+        "role": "paragraph",
+        "name": "44,986",
+        "exact": false,
+        "rationale": "Narrows the match to a paragraph element containing the EMI amount. The broken locator ended in a p element, and the partial name makes it independent of the currency symbol spacing."
+      }
+    ]
+  }
+}

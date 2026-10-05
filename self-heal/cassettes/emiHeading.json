@@ -1,0 +1,25 @@
+{
+  "target": "emiHeading",
+  "adapter": "claude-code",
+  "model": "claude-sonnet-5-5",
+  "recordedAt": "2026-10-05T16:04:03.075Z",
+  "promptSha256": "676e53eee8607c54ded9d2b6e083955403b1cc90bf48d217dd2ee23382775aca",
+  "raw": {
+    "candidates": [
+      {
+        "strategy": "role",
+        "role": "heading",
+        "name": "Loan EMI",
+        "exact": false,
+        "rationale": "No snapshot available; the intent names a 'Loan EMI' heading, so match a heading whose name contains that text (partial match for tolerance)."
+      },
+      {
+        "strategy": "role",
+        "role": "heading",
+        "name": "EMI",
+        "exact": false,
+        "rationale": "Fallback without a snapshot: a looser partial match on the 'EMI' heading, kept from the original 'Monthly EMI' name. It may match more than one heading."
+      }
+    ]
+  }
+}

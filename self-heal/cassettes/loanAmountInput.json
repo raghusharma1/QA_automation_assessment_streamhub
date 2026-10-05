@@ -1,0 +1,24 @@
+{
+  "target": "loanAmountInput",
+  "adapter": "claude-code",
+  "model": "claude-sonnet-5-5",
+  "recordedAt": "2026-10-05T16:03:03.136Z",
+  "promptSha256": "b5443ba2c9a3b2917e8c5e8fdc9899993c85019042f50785a5dcff446e398e66",
+  "raw": {
+    "candidates": [
+      {
+        "strategy": "role",
+        "role": "textbox",
+        "name": "Home Loan Amount",
+        "exact": true,
+        "rationale": "The snapshot shows a textbox with the accessible name 'Home Loan Amount' holding the value 50,00,000. This is the home loan amount input."
+      },
+      {
+        "strategy": "label",
+        "label": "Home Loan Amount",
+        "exact": true,
+        "rationale": "The textbox is labelled 'Home Loan Amount', so it can be found by its label text."
+      }
+    ]
+  }
+}

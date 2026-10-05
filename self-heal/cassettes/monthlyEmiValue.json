@@ -1,0 +1,17 @@
+{
+  "target": "monthlyEmiValue",
+  "adapter": "claude-code",
+  "model": "claude-sonnet-5-5",
+  "recordedAt": "2026-10-05T16:03:44.832Z",
+  "promptSha256": "1d1039d7f1120aee072282d532be9a52117cd2e02523ced61903357922d61166",
+  "raw": {
+    "candidates": [
+      {
+        "strategy": "scopedId",
+        "id": "emicalculatordashboard",
+        "childTag": "p",
+        "rationale": "No snapshot was available. The only grounded anchor is the #emicalculatordashboard container id from the broken locator. The EMI value is a plain paragraph with no accessible name, so scope to the container's p element instead of relying on the brittle nth-child chain."
+      }
+    ]
+  }
+}

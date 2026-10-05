@@ -1,0 +1,31 @@
+{
+  "target": "interestRateInput",
+  "adapter": "claude-code",
+  "model": "claude-sonnet-5-5",
+  "recordedAt": "2026-10-05T16:03:24.675Z",
+  "promptSha256": "9bd1c655a7de5fe5640fda70371780cc3f2c8d5e4fc1ae5715efe1e867e20baf",
+  "raw": {
+    "candidates": [
+      {
+        "strategy": "label",
+        "label": "Interest rate",
+        "exact": false,
+        "rationale": "No snapshot was available, so this is inferred from the intent. A form input labelled 'Interest rate' is the most likely match, and label matching works whether the input is a text or number type. Partial match allows for suffixes such as '(%)' or 'p.a.'."
+      },
+      {
+        "strategy": "role",
+        "role": "spinbutton",
+        "name": "Interest rate",
+        "exact": false,
+        "rationale": "Fallback, also inferred from the intent. EMI calculator rate fields are commonly type=number, which has the spinbutton role. Partial name match covers unit suffixes."
+      },
+      {
+        "strategy": "role",
+        "role": "textbox",
+        "name": "Interest rate",
+        "exact": false,
+        "rationale": "Second fallback in case the field is a plain text input rather than a number input."
+      }
+    ]
+  }
+}

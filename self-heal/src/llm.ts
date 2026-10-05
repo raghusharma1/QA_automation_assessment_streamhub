@@ -31,7 +31,15 @@ const CASSETTE_DIR = path.resolve(__dirname, '..', 'cassettes');
 const cassettePath = (target: string) => path.join(CASSETTE_DIR, `${target}.json`);
 const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
 
-const jsonSchema = () => JSON.stringify(z.toJSONSchema(HealResponseSchema));
+/**
+ * Draft-07, without the `$schema` key: Claude Code's validator rejects zod's default 2020-12
+ * meta-schema URI ("no schema with key or ref .../draft/2020-12/schema"), found on the first run.
+ */
+const jsonSchema = () => {
+  const schema: Record<string, unknown> = z.toJSONSchema(HealResponseSchema, { target: 'draft-7' });
+  delete schema.$schema;
+  return JSON.stringify(schema);
+};
 
 function callClaudeCode(prompt: string): unknown {
   const args = [

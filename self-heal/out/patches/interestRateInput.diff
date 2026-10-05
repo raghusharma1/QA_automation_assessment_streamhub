@@ -1,0 +1,10 @@
+--- a/src/pages/legacy/LegacyEmiCalculatorPage.ts
++++ b/src/pages/legacy/LegacyEmiCalculatorPage.ts (proposed, not applied)
+@@ -44,5 +44,2 @@ interestRateInput: Interest rate input
+-    this.interestRateInput = page
+-      .locator(
+-        'xpath=/html/body/div[1]/div/main/article/div[2]/div[1]/div/form/div[2]/div[1]/input',
+-      )
+-      .describe('Interest rate input');
++    this.interestRateInput = page.getByLabel('Interest rate')
++      .describe('Interest rate input');

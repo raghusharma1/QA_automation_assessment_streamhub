@@ -8,6 +8,7 @@ import {
 import { classify, extractSnapshot } from '../../self-heal/src/failures';
 import { lintSource } from '../../self-heal/src/lint-locators';
 import { patchedSource } from '../../self-heal/src/patch';
+import { stabilityGate } from '../../self-heal/src/validate';
 import { findUsages, parseTargets, type Target } from '../../self-heal/src/targets';
 
 // Real failure messages from `npm run test:broken` (trimmed).
@@ -132,6 +133,37 @@ test.describe('self-heal: structured candidates (no model-written code)', () => 
     expect(HealResponseSchema.safeParse({ candidates: [] }).success, 'at least one candidate').toBe(
       false,
     );
+  });
+
+  test('stability gate rejects locators that identify an element by data', () => {
+    // From the first live run: this passed every other gate and was circular.
+    expect(
+      stabilityGate({ strategy: 'text', text: '₹44,986', exact: false, rationale: 'r' }),
+    ).toMatchObject({
+      passed: false,
+    });
+    expect(
+      stabilityGate({
+        strategy: 'role',
+        role: 'paragraph',
+        name: '44,986',
+        exact: true,
+        rationale: 'r',
+      }).passed,
+    ).toBe(false);
+    expect(
+      stabilityGate({
+        strategy: 'role',
+        role: 'heading',
+        name: 'Loan EMI',
+        exact: true,
+        rationale: 'r',
+      }).passed,
+    ).toBe(true);
+    expect(
+      stabilityGate({ strategy: 'scopedId', id: 'emiamount', childTag: 'p', rationale: 'r' })
+        .passed,
+    ).toBe(true);
   });
 
   test('role compatibility follows how the steps use the element', () => {

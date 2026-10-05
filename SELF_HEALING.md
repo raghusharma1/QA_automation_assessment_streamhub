@@ -10,8 +10,40 @@ npm run test:broken     # run the deliberately broken scenarios (they fail, on p
 npm run heal            # detect -> prompt -> validate -> self-heal/out/healing-report.md
 ```
 
-**Latest run:** [self-heal/out/healing-report.md](self-heal/out/healing-report.md), with proposed
-patches in [self-heal/out/patches/](self-heal/out/patches).
+## Results of the live run
+
+Model: **Claude Sonnet 5.5 via headless Claude Code**, against the live site. The real responses are
+recorded in [`self-heal/cassettes/`](self-heal/cassettes), so `npm run heal` replays them offline
+and reproduces the same outcome. Full report:
+[self-heal/out/healing-report.md](self-heal/out/healing-report.md); patches in
+[self-heal/out/patches/](self-heal/out/patches).
+
+| Scenario                       | Outcome                    | Proposed locator                                                  | Notes                                                            |
+| ------------------------------ | -------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Broken 1: ambiguous regex name | ✅ proposed                | `getByRole('link', { name: 'Personal Loan', exact: true })`       | re-run 3/3                                                       |
+| Broken 2: renamed id           | ✅ proposed                | `getByRole('textbox', { name: 'Home Loan Amount', exact: true })` | re-run 3/3                                                       |
+| Broken 3: absolute XPath       | ✅ proposed                | `getByLabel('Interest rate')`                                     | a `spinbutton` guess was rejected (0 matches)                    |
+| Broken 4: positional CSS       | 🙋 **needs a human**       | none                                                              | every candidate was rejected; see below                          |
+| Broken 5: drifted text         | ✅ proposed **in round 2** | `getByRole('heading', { name: 'Loan EMI', exact: true })`         | round 1 forgot `exact`, matched 3 headings; fixed after feedback |
+| Control: wrong expected value  | 🛑 **refused**             | none                                                              | classified `assertion-mismatch` before any model call            |
+
+**What the live run taught me (and changed in the code):**
+
+1. **A circular locator passed every gate.** In its first version, the healer accepted
+   `getByText('₹44,986')` for Broken 4. It is unique, visible, and the re-run passed. But it finds
+   the EMI _by the value the test asserts_: if the EMI were ever wrong, the locator would find nothing
+   and the bug would look like a locator problem. That's exactly the masking this design is meant to
+   prevent. I added a **stability gate** (numbers in a name or text are data, not identity) and
+   re-recorded. Broken 4 now correctly ends at **"needs a human"**: the right fix is
+   `locator('#emiamount p')`, and `emiamount` doesn't appear in the accessibility snapshot the model
+   sees. The honest outcome is to ask a person, or better, add a `data-testid`.
+2. **Feedback beats retrying blind.** For Broken 5 the model's first answers matched 3 headings
+   (no `exact: true`). One bounded feedback round, giving it our gate results ("3 element(s)
+   matched"), fixed it. The loop stops after 2 rounds: past that, a model mostly spends tokens
+   guessing.
+3. **Real tool integration finds real problems.** The first call failed because Claude Code's
+   `--json-schema` validator rejects zod's default JSON Schema 2020-12 meta-schema URI. The schema
+   is now emitted as draft-07.
 
 ---
 
@@ -89,15 +121,18 @@ The model is configurable (`HEAL_MODEL`), not hardcoded.
 
 ## 4. Validation before applying
 
-Every candidate goes through five gates, in order ([`validate.ts`](self-heal/src/validate.ts)):
+Every candidate goes through six gates, in order ([`validate.ts`](self-heal/src/validate.ts)).
+If none survives, the gate results go back to the model **once** (a bounded second round), and
+the new candidates face the same gates.
 
-| Gate          | Check                                                                                                                                | Catches                                      |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
-| schema        | output parses as a known strategy (zod, strict)                                                                                      | malformed or injected output                 |
-| unique        | `count() === 1` on the live page                                                                                                     | ambiguous candidates                         |
-| visible       | the element is visible                                                                                                               | hidden duplicates, templates                 |
-| role fits     | Playwright's computed ARIA role suits how the steps use it (`fill` → textbox, `click` → link/button…)                                | an element that can't do what the step needs |
-| **re-run ×3** | the candidate is patched in temporarily, the failing scenario runs **3 times**, then the file is restored and verified byte-for-byte | the **wrong element**, and flakiness         |
+| Gate          | Check                                                                                                                                | Catches                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| schema        | output parses as a known strategy (zod, strict)                                                                                      | malformed or injected output                      |
+| stable        | no numbers in the name or text: data is not identity                                                                                 | **circular** locators like `getByText('₹44,986')` |
+| unique        | `count() === 1` on the live page                                                                                                     | ambiguous candidates                              |
+| visible       | the element is visible                                                                                                               | hidden duplicates, templates                      |
+| role fits     | Playwright's computed ARIA role suits how the steps use it (`fill` → textbox, `click` → link/button…)                                | an element that can't do what the step needs      |
+| **re-run ×3** | the candidate is patched in temporarily, the failing scenario runs **3 times**, then the file is restored and verified byte-for-byte | the **wrong element**, and flakiness              |
 
 The re-run is the semantic check. Each broken scenario ends with a post-condition only the right
 element can satisfy: the value must land in the Home Loan Amount field, the Personal Loan tab must
@@ -140,14 +175,14 @@ generator and **healer** sub-agents for Claude Code. The healer replays a failin
 the live page through Playwright's MCP tools, **edits the test file directly**, and re-runs it. If
 it decides the feature itself is broken, it can mark the test `test.fixme()`.
 
-|                 | Playwright Test Agents healer        | This POC                                                                   |
-| --------------- | ------------------------------------ | -------------------------------------------------------------------------- |
-| Model output    | free-form edits to the test file     | structured candidates only; code built by us                               |
-| Scope of change | anything in the file                 | only the locator expression of one member                                  |
-| Failure triage  | the agent's judgement                | deterministic classifier; assertion failures refused before any model call |
-| Validation      | the agent re-runs the test           | unique + visible + role + re-run ×3, then byte-identical restore           |
-| Applying        | edits in place                       | proposal + patch only; a human applies it                                  |
-| Best for        | exploratory repair in an IDE session | unattended CI triage where false heals are expensive                       |
+|                 | Playwright Test Agents healer        | This POC                                                                                              |
+| --------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Model output    | free-form edits to the test file     | structured candidates only; code built by us                                                          |
+| Scope of change | anything in the file                 | only the locator expression of one member                                                             |
+| Failure triage  | the agent's judgement                | deterministic classifier; assertion failures refused before any model call                            |
+| Validation      | the agent re-runs the test           | stable + unique + visible + role + re-run ×3, then byte-identical restore; one bounded feedback round |
+| Applying        | edits in place                       | proposal + patch only; a human applies it                                                             |
+| Best for        | exploratory repair in an IDE session | unattended CI triage where false heals are expensive                                                  |
 
 They're complementary: the agent is great in an interactive session; a constrained, auditable
 pipeline is safer unattended.

@@ -1,6 +1,10 @@
 /**
  * Step 3: VALIDATION before anything is proposed. Every candidate must pass, in order:
  *   1. schema:    the model's output parses as a structured candidate (zod)
+ *   1b. stable:   it doesn't identify the element by data (numbers in a name or text). A locator
+ *                 like getByText('₹44,986') finds the EMI by the very value the test asserts:
+ *                 circular, and it turns a wrong value into a "missing element". It passed every
+ *                 other gate in the first live run, which is why this gate exists.
  *   2. unique:    exactly one element matches on the live page
  *   3. visible:   that element is visible
  *   4. role fits: its ARIA role fits how the steps use it (fill -> textbox, click -> link/button…)
@@ -20,9 +24,11 @@ import { withPatch } from './patch';
 import type { Target } from './targets';
 
 export interface GateResult {
-  gate: 'unique' | 'visible' | 'role' | 'rerun';
+  gate: 'stable' | 'unique' | 'visible' | 'role' | 'rerun';
   passed: boolean;
   detail: string;
+  /** The gate was deliberately not run (e.g. a higher-ranked candidate was already accepted). */
+  skipped?: boolean;
 }
 
 const ROOT = path.resolve(__dirname, '..', '..');
@@ -33,12 +39,32 @@ export async function openBrowser(): Promise<Browser> {
   return chromium.launch();
 }
 
-/** Gates 2-4, on a fresh copy of the page in its default state. */
+/** Gate 1b (static): numbers are data, not identity. */
+export function stabilityGate(candidate: Candidate): GateResult {
+  const words = [
+    'name' in candidate ? candidate.name : '',
+    'text' in candidate ? candidate.text : '',
+    'label' in candidate ? candidate.label : '',
+    'placeholder' in candidate ? candidate.placeholder : '',
+  ].join(' ');
+  const data = /\d[\d,.]*/.exec(words)?.[0];
+  return data
+    ? {
+        gate: 'stable',
+        passed: false,
+        detail: `identifies the element by data ("${data}"), not by what it is`,
+      }
+    : { gate: 'stable', passed: true, detail: 'no data-dependent text' };
+}
+
+/** Gates 1b-4: the static stability check, then the live checks on a fresh page. */
 export async function checkOnLivePage(
   browser: Browser,
   candidate: Candidate,
   target: Target,
 ): Promise<GateResult[]> {
+  const stable = stabilityGate(candidate);
+  if (!stable.passed) return [stable];
   const context = await browser.newContext({ locale: 'en-IN' });
   await context.route(
     (u) => isBlockedHost(u.href),
@@ -48,7 +74,7 @@ export async function checkOnLivePage(
   try {
     await page.goto(env.EMI_BASE_URL);
     const locator = buildLocator(page, candidate);
-    const results: GateResult[] = [];
+    const results: GateResult[] = [stable];
 
     const count = await locator.count();
     results.push({ gate: 'unique', passed: count === 1, detail: `${count} element(s) matched` });

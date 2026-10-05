@@ -1,0 +1,18 @@
+{
+  "target": "personalLoanTab",
+  "adapter": "claude-code",
+  "model": "claude-sonnet-5-5",
+  "recordedAt": "2026-10-05T16:02:46.606Z",
+  "promptSha256": "0ae9e8fab9fc3fa6f40347b1783cdd7ab3d837c000d18ac34fff424c44454b16",
+  "raw": {
+    "candidates": [
+      {
+        "strategy": "role",
+        "role": "link",
+        "name": "Personal Loan",
+        "exact": true,
+        "rationale": "The snapshot shows a link named 'Personal Loan' in the product tab list. It is the only link with that exact name, so an exact match resolves to a single element."
+      }
+    ]
+  }
+}

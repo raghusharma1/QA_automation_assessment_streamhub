@@ -14,7 +14,7 @@ import { HealResponseSchema, toCode, type Candidate } from './candidates';
 import { classify, readFailures, type Classification } from './failures';
 import { askModel } from './llm';
 import { unifiedDiff } from './patch';
-import { buildPrompt } from './prompt';
+import { buildFeedbackPrompt, buildPrompt } from './prompt';
 import { resolveTarget, type Target } from './targets';
 import { checkOnLivePage, openBrowser, rerunWithCandidate, type GateResult } from './validate';
 
@@ -22,7 +22,10 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const REPORT = path.join(ROOT, 'reports', 'self-healing', 'results.json');
 const OUT = path.join(ROOT, 'self-heal', 'out');
 
-interface CandidateOutcome {
+const MAX_ROUNDS = 2;
+
+export interface CandidateOutcome {
+  round: number;
   candidate: Candidate;
   code: string;
   gates: GateResult[];
@@ -33,10 +36,13 @@ interface FailureOutcome {
   classification: Classification;
   target?: Target;
   note?: string;
-  model?: string;
+  models: string[];
   candidates: CandidateOutcome[];
   proposal?: CandidateOutcome;
 }
+
+/** Console marker for a candidate that was not accepted: ⏭ if it was never re-run, else ❌. */
+const g0 = (gates: GateResult[]) => (gates.some((g) => g.skipped) ? '⏭' : '❌');
 
 function pageObjectFiles(dir = path.join(ROOT, 'src', 'pages')): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -56,7 +62,12 @@ async function main() {
   try {
     for (const failure of failures) {
       const classification = classify(failure.message);
-      const outcome: FailureOutcome = { title: failure.title, classification, candidates: [] };
+      const outcome: FailureOutcome = {
+        title: failure.title,
+        classification,
+        models: [],
+        candidates: [],
+      };
       outcomes.push(outcome);
       console.log(`\n▶ ${failure.title}\n  classified: ${classification.kind}`);
 
@@ -72,39 +83,54 @@ async function main() {
       }
       outcome.target = target;
 
-      const prompt = buildPrompt(failure, classification, target);
-      const answer = await askModel(target.member, prompt, { record });
-      outcome.model = `${answer.adapter}: ${answer.model}${answer.promptChanged ? ' (prompt changed since recording)' : ''}`;
-      const parsed = HealResponseSchema.safeParse(answer.raw);
-      if (!parsed.success) {
-        outcome.note = `Model output rejected by the schema gate: ${parsed.error.issues[0]?.message ?? 'invalid'}.`;
-        continue;
-      }
-
-      for (const candidate of parsed.data.candidates) {
-        const code = toCode(candidate);
-        const gates = await checkOnLivePage(browser, candidate, target);
-        const live = gates.every((g) => g.passed);
-        const result: CandidateOutcome = { candidate, code, gates, accepted: false };
-        if (live && !outcome.proposal) {
-          console.log(`  re-running "${failure.title}" ×3 with ${code}`);
-          const rerun = rerunWithCandidate(target, code, failure.title);
-          gates.push(rerun);
-          result.accepted = rerun.passed;
-          if (rerun.passed) outcome.proposal = result;
-        } else if (live) {
-          gates.push({
-            gate: 'rerun',
-            passed: false,
-            detail: 'not run: a higher-ranked candidate was already accepted',
-          });
-        }
-        outcome.candidates.push(result);
-        console.log(
-          `  ${result.accepted ? '✅' : '❌'} ${code}  ${gates.map((g) => `${g.gate}:${g.passed ? 'ok' : 'FAIL'}`).join(' ')}`,
+      const basePrompt = buildPrompt(failure, classification, target);
+      let prompt = basePrompt;
+      // Bounded repair loop: if no candidate survives validation, the gate results go back to the
+      // model ONCE. More rounds would just spend tokens guessing.
+      for (let round = 1; round <= MAX_ROUNDS && !outcome.proposal; round++) {
+        const key = round === 1 ? target.member : `${target.member}--round-${round}`;
+        const answer = await askModel(key, prompt, { record });
+        outcome.models.push(
+          `round ${round}: ${answer.adapter}, ${answer.model}${answer.promptChanged ? ' (prompt changed since recording)' : ''}`,
         );
+        const parsed = HealResponseSchema.safeParse(answer.raw);
+        if (!parsed.success) {
+          outcome.note = `Model output rejected by the schema gate: ${parsed.error.issues[0]?.message ?? 'invalid'}.`;
+          break;
+        }
+
+        for (const candidate of parsed.data.candidates) {
+          const code = toCode(candidate);
+          const gates = await checkOnLivePage(browser, candidate, target);
+          const live = gates.every((g) => g.passed);
+          const result: CandidateOutcome = { round, candidate, code, gates, accepted: false };
+          if (live && !outcome.proposal) {
+            console.log(`  re-running "${failure.title}" ×3 with ${code}`);
+            const rerun = rerunWithCandidate(target, code, failure.title);
+            gates.push(rerun);
+            result.accepted = rerun.passed;
+            if (rerun.passed) outcome.proposal = result;
+          } else if (live) {
+            gates.push({
+              gate: 'rerun',
+              passed: false,
+              skipped: true,
+              detail: 'not run: a higher-ranked candidate was already accepted',
+            });
+          }
+          outcome.candidates.push(result);
+          const summary = gates
+            .map((g) => `${g.gate}:${g.skipped ? 'skipped' : g.passed ? 'ok' : 'FAIL'}`)
+            .join(' ');
+          console.log(
+            `  [round ${round}] ${result.accepted ? '✅' : g0(gates)} ${code}  ${summary}`,
+          );
+        }
+        if (!outcome.proposal) prompt = buildFeedbackPrompt(basePrompt, outcome.candidates);
       }
-      if (!outcome.proposal) outcome.note = 'No candidate passed every gate: needs a human.';
+      if (!outcome.proposal && !outcome.note) {
+        outcome.note = `No candidate passed every gate after ${MAX_ROUNDS} rounds: needs a human.`;
+      }
     }
   } finally {
     await browser.close();
@@ -137,23 +163,32 @@ function writeReport(outcomes: FailureOutcome[]) {
       lines.push(
         `- **Locator:** \`${o.target.member}\` in \`${o.target.file}\`, intent "${o.target.intent}"`,
       );
-      lines.push(`- **Broken:** \`${o.target.expression.replace(/\s+/g, ' ')}\``);
+      // Join a multi-line chain back into one line: "page\n  .getByRole(" -> "page.getByRole(".
+      const oneLine = o.target.expression.replace(/\s*\n\s*/g, '').replace(/\s+/g, ' ');
+      lines.push(`- **Broken:** \`${oneLine}\``);
     }
-    if (o.model) lines.push(`- **Model:** ${o.model}`);
+    for (const model of o.models)
+      lines.push(`- **Model (${model.split(':')[0]}):** ${model.slice(model.indexOf(':') + 2)}`);
     if (o.note) lines.push(`- **Result:** ${o.note}`);
     if (o.candidates.length) {
       lines.push(
         '',
-        '| # | Candidate | unique | visible | role fits | re-run ×3 | Verdict |',
-        '|---|---|---|---|---|---|---|',
+        '| # | Round | Candidate | stable | unique | visible | role fits | re-run ×3 | Verdict |',
+        '|---|---|---|---|---|---|---|---|---|',
       );
       o.candidates.forEach((c, i) => {
         const g = (name: GateResult['gate']) => {
           const r = c.gates.find((x) => x.gate === name);
-          return r ? `${icon(r.passed)} ${r.detail}` : '–';
+          if (!r) return '–';
+          return r.skipped ? `⏭ ${r.detail}` : `${icon(r.passed)} ${r.detail}`;
         };
+        const verdict = c.accepted
+          ? '**proposed**'
+          : c.gates.some((x) => x.skipped)
+            ? 'not needed'
+            : 'rejected';
         lines.push(
-          `| ${i + 1} | \`${c.code}\` | ${g('unique')} | ${g('visible')} | ${g('role')} | ${g('rerun')} | ${c.accepted ? '**proposed**' : 'rejected'} |`,
+          `| ${i + 1} | ${c.round} | \`${c.code}\` | ${g('stable')} | ${g('unique')} | ${g('visible')} | ${g('role')} | ${g('rerun')} | ${verdict} |`,
         );
       });
       lines.push('', '<details><summary>Model rationale</summary>', '');
