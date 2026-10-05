@@ -1,5 +1,7 @@
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { LoanForm } from './components/LoanForm';
+import { PieChart } from './components/PieChart';
 
 export const LOAN_TYPES = ['Home Loan', 'Personal Loan', 'Car Loan'] as const;
 export type LoanType = (typeof LOAN_TYPES)[number];
@@ -7,8 +9,9 @@ export type LoanType = (typeof LOAN_TYPES)[number];
 /** Narrow free text from a feature file to a LoanType, failing loudly on typos. */
 export function toLoanType(value: string): LoanType {
   const match = LOAN_TYPES.find((t) => t === value.trim());
-  if (!match)
+  if (!match) {
     throw new Error(`Unknown loan type "${value}". Expected one of: ${LOAN_TYPES.join(', ')}`);
+  }
   return match;
 }
 
@@ -23,10 +26,26 @@ export class EmiCalculatorPage extends BasePage {
   protected readonly path = '/';
 
   readonly heading: Locator;
+  readonly form: LoanForm;
+  readonly pieChart: PieChart;
+
+  /**
+   * Result panel. Each figure is a <p> next to an <h4> ("Loan EMI", "Total Interest Payable",
+   * "Total Payment (Principal + Interest)") with no labelled relationship between them, so the
+   * semantic container ids are the stable hook.
+   */
+  readonly emi: Locator;
+  readonly totalInterest: Locator;
+  readonly totalPayment: Locator;
 
   constructor(page: Page) {
     super(page);
     this.heading = page.getByRole('heading', { level: 1, name: /EMI Calculator/ });
+    this.form = new LoanForm(page);
+    this.pieChart = new PieChart(page);
+    this.emi = page.locator('#emiamount p');
+    this.totalInterest = page.locator('#emitotalinterest p');
+    this.totalPayment = page.locator('#emitotalamount p');
   }
 
   /**
@@ -35,5 +54,11 @@ export class EmiCalculatorPage extends BasePage {
    */
   loanTab(type: LoanType): Locator {
     return this.page.getByRole('link', { name: type, exact: true });
+  }
+
+  /** Switches product. Done once the form's amount label reflects the new product. */
+  async selectLoanTab(type: LoanType): Promise<void> {
+    await this.loanTab(type).click();
+    await expect(this.form.amount(type)).toBeVisible();
   }
 }

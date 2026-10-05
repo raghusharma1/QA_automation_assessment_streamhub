@@ -1,6 +1,7 @@
 import { createBdd, test as base } from 'playwright-bdd';
 import { env } from '../config/env';
 import { EmiCalculatorPage, type LoanType } from '../pages/EmiCalculatorPage';
+import type { LoanBreakdown, LoanInput } from '../support/emi-math';
 import { isBlockedHost } from '../support/third-party-blocklist';
 
 /**
@@ -10,6 +11,15 @@ import { isBlockedHost } from '../support/third-party-blocklist';
  */
 export interface ScenarioContext {
   loanType?: LoanType;
+  /** Loan entered in the UI and the independently computed expectation for it. */
+  loan?: { input: LoanInput; expected: LoanBreakdown };
+}
+
+/** Read the loan a previous step entered, failing with a clear message if it is missing. */
+export function requireLoan(ctx: ScenarioContext): NonNullable<ScenarioContext['loan']> {
+  if (!ctx.loan)
+    throw new Error('No loan entered yet: run the "I enter a loan amount..." step first');
+  return ctx.loan;
 }
 
 type Fixtures = {

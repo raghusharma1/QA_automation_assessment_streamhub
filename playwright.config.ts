@@ -45,6 +45,11 @@ export default defineConfig({
 
   projects: [
     {
+      // Plain Playwright tests (no browser) for the framework's own logic, e.g. the EMI oracle.
+      name: 'unit',
+      testDir: 'tests/unit',
+    },
+    {
       // UI tests against the live EMI calculator (Section B3).
       ...defineBddProject({
         name: 'ui',

@@ -13,6 +13,6 @@
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["src", "api", "self-heal", "playwright.config.ts"],
+  "include": ["src", "tests", "api", "self-heal", "playwright.config.ts"],
   "exclude": ["node_modules", ".features-gen", "reports"]
 }
