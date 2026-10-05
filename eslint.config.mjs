@@ -26,7 +26,7 @@ export default defineConfig([
     extends: [tseslint.configs.disableTypeChecked],
   },
   {
-    files: ['src/**/*.ts'],
+    files: ['src/**/*.ts', 'tests/**/*.ts'],
     extends: [playwright.configs['flat/recommended']],
     rules: {
       // Playwright fixtures require an object-destructuring first arg, even when empty: ({}, use) => ...

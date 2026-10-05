@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 /** One point as Highcharts holds it in memory (the data the SVG is drawn from). */
 export interface ChartPoint {
@@ -38,4 +38,23 @@ export async function readChartPoints(page: Page, containerId: string): Promise<
       })),
     );
   }, containerId);
+}
+
+/**
+ * Waits until the chart's data, projected through `select`, equals `expected`.
+ *
+ * Highcharts redraws asynchronously after the inputs change, and every slider step triggers a
+ * redraw. Anything that reads, counts, hovers or screenshots a chart must call this first,
+ * otherwise it can observe the previous chart and pass for the wrong reason.
+ */
+export async function waitForChartData<T>(
+  page: Page,
+  containerId: string,
+  select: (points: ChartPoint[]) => T,
+  expected: T,
+  message: string,
+): Promise<void> {
+  await expect
+    .poll(async () => select(await readChartPoints(page, containerId)), { message })
+    .toEqual(expected);
 }

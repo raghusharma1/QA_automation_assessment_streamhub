@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import { parsePercent } from '../../support/inr';
-import { readChartPoints, type ChartPoint } from './highcharts';
+import { readChartPoints, waitForChartData, type ChartPoint } from './highcharts';
 
 /**
  * The "Break-up of Total Payment" pie chart (Highcharts 8.1, SVG).
@@ -27,6 +27,20 @@ export class PieChart {
   /** Percentages printed on the slices, as the user sees them, e.g. [74.9, 25.1]. */
   async displayedPercentages(): Promise<number[]> {
     return (await this.dataLabels.allTextContents()).map(parsePercent);
+  }
+
+  /**
+   * Waits until the chart shows the given slices, as [name, value rounded to the rupee] pairs.
+   * Call before reading or capturing the chart, so the previous loan's chart can't be checked.
+   */
+  async waitForSlices(expected: [name: string, rupees: number][]): Promise<void> {
+    await waitForChartData(
+      this.page,
+      PieChart.containerId,
+      (points) => points.map((p): [string, number] => [p.name, Math.round(p.y)]),
+      expected,
+      'pie chart redrawn for the entered loan',
+    );
   }
 
   /** Slice values from the chart model, e.g. [{name: 'Principal Loan Amount', y: 1000000}, ...]. */

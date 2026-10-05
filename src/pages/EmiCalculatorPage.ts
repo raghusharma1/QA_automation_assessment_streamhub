@@ -56,9 +56,22 @@ export class EmiCalculatorPage extends BasePage {
     return this.page.getByRole('link', { name: type, exact: true });
   }
 
-  /** Switches product. Done once the form's amount label reflects the new product. */
+  /**
+   * The tab's list item. The site marks the selected product only with an `active` class on it
+   * (no aria-selected), so that class is the observable "this tab is selected" state.
+   */
+  loanTabItem(type: LoanType): Locator {
+    return this.page.getByRole('listitem').filter({ has: this.loanTab(type) });
+  }
+
+  /**
+   * Switches product. Done once the tab is marked active and the form's amount label reflects
+   * the new product. Both checks matter: Home Loan is preselected on load, so the label alone
+   * would not prove the navigation happened.
+   */
   async selectLoanTab(type: LoanType): Promise<void> {
     await this.loanTab(type).click();
+    await expect(this.loanTabItem(type)).toHaveClass(/\bactive\b/);
     await expect(this.form.amount(type)).toBeVisible();
   }
 }

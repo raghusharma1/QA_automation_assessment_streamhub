@@ -1,5 +1,15 @@
 import { expect } from '@playwright/test';
-import { requireLoan, Then } from '../../fixtures';
+import { requireLoan, Then, type ScenarioContext } from '../../fixtures';
+import type { EmiCalculatorPage } from '../../pages/EmiCalculatorPage';
+
+/** Blocks until the pie has been redrawn for the loan this scenario entered. */
+async function waitForPieOfEnteredLoan(emiPage: EmiCalculatorPage, ctx: ScenarioContext) {
+  const { input, expected } = requireLoan(ctx);
+  await emiPage.pieChart.waitForSlices([
+    ['Principal Loan Amount', input.principal],
+    ['Total Interest', expected.totalInterest],
+  ]);
+}
 
 Then('the pie chart is visible with {int} sections', async ({ emiPage }, sections: number) => {
   const pie = emiPage.pieChart;
@@ -10,8 +20,24 @@ Then('the pie chart is visible with {int} sections', async ({ emiPage }, section
 });
 
 Then(
+  'the pie chart sections match my calculated principal and interest',
+  async ({ emiPage, ctx }) => {
+    await waitForPieOfEnteredLoan(emiPage, ctx);
+    // The visible labels are the shares of total payment, rounded to 1 decimal place.
+    const { expected } = requireLoan(ctx);
+    await expect(emiPage.pieChart.dataLabels).toHaveText([
+      `${expected.principalPct.toFixed(1)}%`,
+      `${expected.interestPct.toFixed(1)}%`,
+    ]);
+  },
+);
+
+Then(
   'both pie chart sections show numerical values greater than zero',
-  async ({ emiPage, $testInfo }) => {
+  async ({ emiPage, ctx, $testInfo }) => {
+    // Extract only after the redraw, so the values and screenshot belong to this loan and not
+    // the page's default one (which would also be > 0 and pass for the wrong reason).
+    await waitForPieOfEnteredLoan(emiPage, ctx);
     const pie = emiPage.pieChart;
     const displayed = await pie.displayedPercentages();
     const model = await pie.modelSlices();
@@ -31,22 +57,3 @@ Then(
     for (const slice of model) expect(slice.y, `model value of "${slice.name}"`).toBeGreaterThan(0);
   },
 );
-
-Then('the pie chart values are consistent with my calculation', async ({ emiPage, ctx }) => {
-  const { input, expected } = requireLoan(ctx);
-  const pie = emiPage.pieChart;
-
-  // Slices are redrawn after the inputs change, so poll until the model reflects this loan.
-  await expect
-    .poll(async () => (await pie.modelSlices()).map((s) => [s.name, Math.round(s.y)]))
-    .toEqual([
-      ['Principal Loan Amount', input.principal],
-      ['Total Interest', expected.totalInterest],
-    ]);
-
-  // The visible labels are percentages rounded to 1 decimal place.
-  expect(await pie.displayedPercentages()).toEqual([
-    Number(expected.principalPct.toFixed(1)),
-    Number(expected.interestPct.toFixed(1)),
-  ]);
-});
