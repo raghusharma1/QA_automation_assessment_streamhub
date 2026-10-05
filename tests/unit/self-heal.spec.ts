@@ -1,3 +1,7 @@
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import {
   CandidateSchema,
@@ -7,8 +11,9 @@ import {
 } from '../../self-heal/src/candidates';
 import { classify, extractSnapshot } from '../../self-heal/src/failures';
 import { lintSource } from '../../self-heal/src/lint-locators';
-import { patchedSource } from '../../self-heal/src/patch';
-import { stabilityGate } from '../../self-heal/src/validate';
+import { promptFingerprint } from '../../self-heal/src/llm';
+import { makeDiff, patchedSource } from '../../self-heal/src/patch';
+import { assertedValues, exactVariant, stabilityGate } from '../../self-heal/src/validate';
 import { findUsages, parseTargets, type Target } from '../../self-heal/src/targets';
 
 // Real failure messages from `npm run test:broken` (trimmed).
@@ -45,10 +50,21 @@ test.describe('self-heal: detection (classify)', () => {
     );
   });
 
-  test('extracts the accessibility snapshot from error-context.md', () => {
-    const ctx =
-      '# Error details\n\n# Page snapshot\n\n```yaml\n- heading "Loan EMI" [level=4]\n```\n';
-    expect(extractSnapshot(ctx)).toBe('- heading "Loan EMI" [level=4]');
+  // REAL error-context.md files written by Playwright 1.63 for this project's broken suite. A
+  // synthetic fixture here once hid a bug: expect failures have no "# Page snapshot" heading.
+  const fixture = (name: string) => readFileSync(path.join(__dirname, 'fixtures', name), 'utf8');
+
+  test('extracts the snapshot from an ACTION failure (has a "# Page snapshot" heading)', () => {
+    const snapshot = extractSnapshot(fixture('error-context-action-failure.md'));
+    expect(snapshot).toContain('textbox "Home Loan Amount"');
+    expect(snapshot).not.toContain('```');
+  });
+
+  test('extracts the snapshot from an EXPECT failure (no heading, yaml after "# Error details")', () => {
+    const snapshot = extractSnapshot(fixture('error-context-expect-failure.md'));
+    expect(snapshot).toContain('textbox "Interest Rate"');
+    expect(snapshot).toContain('heading "Loan EMI"');
+    expect(snapshot.length).toBeGreaterThan(10_000);
   });
 });
 
@@ -196,6 +212,73 @@ test.describe('self-heal: patches only touch the locator expression', () => {
   test('refuses an ambiguous patch (expression found more than once)', () => {
     const twice = "page.locator('#loan-amount'); page.locator('#loan-amount');";
     expect(() => patchedSource(twice, target, 'x')).toThrow(/exactly once/);
+  });
+});
+
+test.describe('self-heal: patches are standard, applicable diffs', () => {
+  test('git apply accepts the generated patch and produces the patched file', () => {
+    const original = [
+      'export class P {',
+      '  constructor(page: Page) {',
+      "    this.a = page.locator('#old').describe('A');",
+      "    this.b = page.getByRole('button', { name: 'B' }).describe('B');",
+      '  }',
+      '}',
+      '',
+    ].join('\n');
+    const patched = original.replace(
+      "page.locator('#old')",
+      "page.getByLabel('A', { exact: true })",
+    );
+    const dir = mkdtempSync(path.join(tmpdir(), 'heal-apply-'));
+    try {
+      mkdirSync(path.join(dir, 'src'));
+      writeFileSync(path.join(dir, 'src', 'P.ts'), original);
+      writeFileSync(
+        path.join(dir, 'fix.diff'),
+        `${makeDiff('src/P.ts', original, patched, 'note')}\n`,
+      );
+      const check = spawnSync('git', ['apply', '--check', 'fix.diff'], {
+        cwd: dir,
+        encoding: 'utf8',
+      });
+      expect(check.status, check.stderr).toBe(0);
+      spawnSync('git', ['apply', 'fix.diff'], { cwd: dir });
+      expect(readFileSync(path.join(dir, 'src', 'P.ts'), 'utf8')).toBe(patched);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+test.describe('self-heal: specificity, data and replay fingerprints', () => {
+  test('a non-exact candidate has an exact variant to try; an exact one does not', () => {
+    expect(
+      exactVariant({ strategy: 'label', label: 'Interest rate', exact: false, rationale: 'r' }),
+    ).toEqual({ strategy: 'label', label: 'Interest rate', exact: true, rationale: 'r' });
+    expect(
+      exactVariant({ strategy: 'label', label: 'Interest Rate', exact: true, rationale: 'r' }),
+    ).toBeUndefined();
+    expect(exactVariant({ strategy: 'testId', testId: 'x', rationale: 'r' })).toBeUndefined();
+  });
+
+  test('values a failure asserts or received are extracted, and echoing one is circular', () => {
+    expect(assertedValues(MESSAGES.valueMismatch)).toEqual(['₹33,000', '₹44,986']);
+    expect(assertedValues(MESSAGES.notFound)).toEqual([]); // "9" is too short to be meaningful
+    expect(
+      stabilityGate({ strategy: 'text', text: 'Paid', exact: true, rationale: 'r' }, ['Paid'])
+        .passed,
+    ).toBe(false);
+  });
+
+  test('prompt fingerprint ignores live values and refs, but not structure', () => {
+    const a = 'INTENT: x\n- textbox "Interest Rate" [ref=e12]: "9"\n- paragraph: ₹44,986';
+    const sameStructure =
+      'INTENT: x\n- textbox "Interest Rate" [ref=e99]: "10.5"\n- paragraph: ₹46,607';
+    const different =
+      'INTENT: x\n- textbox "Rate of interest" [ref=e12]: "9"\n- paragraph: ₹44,986';
+    expect(promptFingerprint(a)).toBe(promptFingerprint(sameStructure));
+    expect(promptFingerprint(a)).not.toBe(promptFingerprint(different));
   });
 });
 

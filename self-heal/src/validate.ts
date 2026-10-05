@@ -16,7 +16,7 @@
  */
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
-import { chromium, type Browser } from '@playwright/test';
+import { chromium, devices, type Browser } from '@playwright/test';
 import { env } from '../../src/config/env';
 import { isBlockedHost } from '../../src/support/third-party-blocklist';
 import { buildLocator, compatibleRoles, type Candidate } from './candidates';
@@ -24,7 +24,7 @@ import { withPatch } from './patch';
 import type { Target } from './targets';
 
 export interface GateResult {
-  gate: 'stable' | 'unique' | 'visible' | 'role' | 'rerun';
+  gate: 'stable' | 'unique' | 'specific' | 'visible' | 'role' | 'rerun';
   passed: boolean;
   detail: string;
   /** The gate was deliberately not run (e.g. a higher-ranked candidate was already accepted). */
@@ -39,33 +39,72 @@ export async function openBrowser(): Promise<Browser> {
   return chromium.launch();
 }
 
-/** Gate 1b (static): numbers are data, not identity. */
-export function stabilityGate(candidate: Candidate): GateResult {
-  const words = [
-    'name' in candidate ? candidate.name : '',
-    'text' in candidate ? candidate.text : '',
-    'label' in candidate ? candidate.label : '',
-    'placeholder' in candidate ? candidate.placeholder : '',
-  ].join(' ');
-  const data = /\d[\d,.]*/.exec(words)?.[0];
-  return data
-    ? {
-        gate: 'stable',
-        passed: false,
-        detail: `identifies the element by data ("${data}"), not by what it is`,
-      }
-    : { gate: 'stable', passed: true, detail: 'no data-dependent text' };
+/** The texts a candidate identifies its element by (name, text, label or placeholder). */
+const identifyingText = (c: Candidate) =>
+  [
+    'name' in c ? c.name : '',
+    'text' in c ? c.text : '',
+    'label' in c ? c.label : '',
+    'placeholder' in c ? c.placeholder : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+/** Values a failure asserts or received, e.g. `Expected: "9"`, `Received: "₹44,986"`. */
+export function assertedValues(message: string): string[] {
+  return [...message.matchAll(/^\s*(?:Expected|Received)(?: [a-z]+)?:\s*"?(.+?)"?\s*$/gm)]
+    .map((m) => m[1]!.trim())
+    .filter((v) => v.length > 1 && !v.startsWith('/'));
 }
 
-/** Gates 1b-4: the static stability check, then the live checks on a fresh page. */
+/**
+ * Gate 1b (static): data is not identity. Two heuristic rules, deliberately fail-safe (a false
+ * positive only costs a "needs a human"):
+ *  - the identifying text contains a number (₹44,986, 2026…). Known false positives: real labels
+ *    such as "Step 2" or "Q4". Known false negative: non-numeric data (a player's name in a cell).
+ *  - the identifying text equals a value the failing step asserts or received.
+ */
+export function stabilityGate(candidate: Candidate, asserted: string[] = []): GateResult {
+  const words = identifyingText(candidate);
+  const data = /\d[\d,.]*/.exec(words)?.[0];
+  if (data) {
+    return {
+      gate: 'stable',
+      passed: false,
+      detail: `identifies the element by data ("${data}"), not by what it is`,
+    };
+  }
+  const echoed = asserted.find((v) => words.toLowerCase().includes(v.toLowerCase()));
+  if (echoed) {
+    return {
+      gate: 'stable',
+      passed: false,
+      detail: `uses the value the test asserts ("${echoed}"): circular`,
+    };
+  }
+  return { gate: 'stable', passed: true, detail: 'no data-dependent text' };
+}
+
+/** The same candidate with exact matching, if it has a non-exact name/label/text/placeholder. */
+export function exactVariant(c: Candidate): Candidate | undefined {
+  return 'exact' in c && !c.exact ? { ...c, exact: true } : undefined;
+}
+
+/**
+ * Gates 1b-4: the static stability check, then the live checks on a fresh page with the same
+ * device settings as the test project. Known limit: this is the page's initial state, not the
+ * state at the failing step; an element that only appears after earlier steps would fail
+ * "unique" here (none of the current targets do). The re-run gate covers the real flow.
+ */
 export async function checkOnLivePage(
   browser: Browser,
   candidate: Candidate,
   target: Target,
+  asserted: string[] = [],
 ): Promise<GateResult[]> {
-  const stable = stabilityGate(candidate);
+  const stable = stabilityGate(candidate, asserted);
   if (!stable.passed) return [stable];
-  const context = await browser.newContext({ locale: 'en-IN' });
+  const context = await browser.newContext({ ...devices['Desktop Chrome'], locale: 'en-IN' });
   await context.route(
     (u) => isBlockedHost(u.href),
     (r) => r.abort('blockedbyclient'),
@@ -79,6 +118,30 @@ export async function checkOnLivePage(
     const count = await locator.count();
     results.push({ gate: 'unique', passed: count === 1, detail: `${count} element(s) matched` });
     if (count !== 1) return results;
+
+    // Prefer exact matching: a case-insensitive substring match that happens to be unique today
+    // breaks as soon as a similar name appears. If the exact variant is unique, it must be used
+    // instead (the CLI then tries it automatically).
+    const exact = exactVariant(candidate);
+    if (exact) {
+      const exactCount = await buildLocator(page, exact).count();
+      results.push(
+        exactCount === 1
+          ? {
+              gate: 'specific',
+              passed: false,
+              detail: 'not exact, but the exact variant is also unique: use that',
+            }
+          : {
+              gate: 'specific',
+              passed: true,
+              detail: `exact variant matches ${exactCount}: substring needed`,
+            },
+      );
+      if (exactCount === 1) return results;
+    } else {
+      results.push({ gate: 'specific', passed: true, detail: 'exact or not text-based' });
+    }
 
     const visible = await locator.isVisible();
     results.push({ gate: 'visible', passed: visible, detail: visible ? 'visible' : 'hidden' });

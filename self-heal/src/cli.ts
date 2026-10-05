@@ -8,6 +8,7 @@
  * Model adapter: replay (cassette) if one exists, else headless Claude Code. Override with
  * HEAL_LLM=claude-code|anthropic|replay. See SELF_HEALING.md.
  */
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { HealResponseSchema, toCode, type Candidate } from './candidates';
@@ -16,7 +17,14 @@ import { askModel } from './llm';
 import { unifiedDiff } from './patch';
 import { buildFeedbackPrompt, buildPrompt } from './prompt';
 import { resolveTarget, type Target } from './targets';
-import { checkOnLivePage, openBrowser, rerunWithCandidate, type GateResult } from './validate';
+import {
+  assertedValues,
+  checkOnLivePage,
+  exactVariant,
+  openBrowser,
+  rerunWithCandidate,
+  type GateResult,
+} from './validate';
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const REPORT = path.join(ROOT, 'reports', 'self-healing', 'results.json');
@@ -30,6 +38,8 @@ export interface CandidateOutcome {
   code: string;
   gates: GateResult[];
   accepted: boolean;
+  /** Not proposed by the model: the exact variant of its candidate, tried by the healer. */
+  autoExact?: boolean;
 }
 interface FailureOutcome {
   title: string;
@@ -57,6 +67,17 @@ async function main() {
   const failures = readFailures(REPORT);
   const files = pageObjectFiles();
   const outcomes: FailureOutcome[] = [];
+  // A run that was killed mid-validation can leave a page object patched. Refuse to start rather
+  // than validate against (and propose diffs from) a modified file.
+  const dirty = spawnSync('git', ['status', '--porcelain', '--', ...files], {
+    cwd: ROOT,
+    encoding: 'utf8',
+  });
+  if (dirty.stdout.trim()) {
+    throw new Error(
+      `Page objects have uncommitted changes; restore them first (git checkout -- <file>):\n${dirty.stdout}`,
+    );
+  }
   const browser = await openBrowser();
 
   try {
@@ -83,6 +104,7 @@ async function main() {
       }
       outcome.target = target;
 
+      const asserted = assertedValues(failure.message);
       const basePrompt = buildPrompt(failure, classification, target);
       let prompt = basePrompt;
       // Bounded repair loop: if no candidate survives validation, the gate results go back to the
@@ -99,11 +121,27 @@ async function main() {
           break;
         }
 
-        for (const candidate of parsed.data.candidates) {
+        // A queue, because the specificity gate can add the exact variant of a candidate.
+        const queue: { candidate: Candidate; autoExact?: boolean }[] = parsed.data.candidates.map(
+          (candidate) => ({ candidate }),
+        );
+        for (let next = queue.shift(); next; next = queue.shift()) {
+          const { candidate } = next;
           const code = toCode(candidate);
-          const gates = await checkOnLivePage(browser, candidate, target);
+          const gates = await checkOnLivePage(browser, candidate, target, asserted);
+          const exact = exactVariant(candidate);
+          if (exact && gates.some((g) => g.gate === 'specific' && !g.passed)) {
+            queue.unshift({ candidate: exact, autoExact: true });
+          }
           const live = gates.every((g) => g.passed);
-          const result: CandidateOutcome = { round, candidate, code, gates, accepted: false };
+          const result: CandidateOutcome = {
+            round,
+            candidate,
+            code,
+            gates,
+            accepted: false,
+            autoExact: next.autoExact,
+          };
           if (live && !outcome.proposal) {
             console.log(`  re-running "${failure.title}" ×3 with ${code}`);
             const rerun = rerunWithCandidate(target, code, failure.title);
@@ -135,12 +173,12 @@ async function main() {
   } finally {
     await browser.close();
   }
-  writeReport(outcomes);
+  await writeReport(outcomes);
 }
 
 const icon = (passed: boolean) => (passed ? '✅' : '❌');
 
-function writeReport(outcomes: FailureOutcome[]) {
+async function writeReport(outcomes: FailureOutcome[]) {
   rmSync(path.join(OUT, 'patches'), { recursive: true, force: true });
   mkdirSync(path.join(OUT, 'patches'), { recursive: true });
   const healed = outcomes.filter((o) => o.proposal).length;
@@ -173,8 +211,8 @@ function writeReport(outcomes: FailureOutcome[]) {
     if (o.candidates.length) {
       lines.push(
         '',
-        '| # | Round | Candidate | stable | unique | visible | role fits | re-run ×3 | Verdict |',
-        '|---|---|---|---|---|---|---|---|---|',
+        '| # | Round | Candidate | stable | unique | exact preferred | visible | role fits | re-run ×3 | Verdict |',
+        '|---|---|---|---|---|---|---|---|---|---|',
       );
       o.candidates.forEach((c, i) => {
         const g = (name: GateResult['gate']) => {
@@ -188,15 +226,19 @@ function writeReport(outcomes: FailureOutcome[]) {
             ? 'not needed'
             : 'rejected';
         lines.push(
-          `| ${i + 1} | ${c.round} | \`${c.code}\` | ${g('stable')} | ${g('unique')} | ${g('visible')} | ${g('role')} | ${g('rerun')} | ${verdict} |`,
+          `| ${i + 1} | ${c.round} | \`${c.code}\` | ${g('stable')} | ${g('unique')} | ${g('specific')} | ${g('visible')} | ${g('role')} | ${g('rerun')} | ${verdict} |`,
         );
       });
       lines.push('', '<details><summary>Model rationale</summary>', '');
-      o.candidates.forEach((c, i) => lines.push(`${i + 1}. ${c.candidate.rationale}`));
+      o.candidates.forEach((c, i) =>
+        lines.push(
+          `${i + 1}. ${c.autoExact ? '_(exact variant of the previous candidate, tried by the healer, not the model)_ ' : ''}${c.candidate.rationale}`,
+        ),
+      );
       lines.push('', '</details>');
     }
     if (o.proposal && o.target) {
-      const diff = unifiedDiff(o.target, o.proposal.code);
+      const diff = await unifiedDiff(o.target, o.proposal.code);
       writeFileSync(path.join(OUT, 'patches', `${o.target.member}.diff`), `${diff}\n`, 'utf8');
       lines.push(
         '',

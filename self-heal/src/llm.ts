@@ -23,13 +23,28 @@ export interface Cassette {
   adapter: Exclude<AdapterName, 'replay'>;
   model: string;
   recordedAt: string;
-  promptSha256: string;
+  /** See promptFingerprint(). The full prompt is stored too, so a reviewer can see exactly what the model was given. */
+  promptFingerprint: string;
+  prompt: string;
   raw: unknown;
 }
 
 const CASSETTE_DIR = path.resolve(__dirname, '..', 'cassettes');
 const cassettePath = (target: string) => path.join(CASSETTE_DIR, `${target}.json`);
 const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
+
+/**
+ * Fingerprint of what the model was asked, ignoring live noise: snapshot element refs, values
+ * after `:` (input values, prices) and digits. So "prompt changed since recording" means the
+ * page's STRUCTURE or the failure changed, not that an ad rotated or a number moved.
+ */
+export function promptFingerprint(prompt: string): string {
+  const normalised = prompt
+    .replace(/\s*\[(ref|cursor|active|level)=?[^\]]*\]/g, '')
+    .replace(/(^\s*- [^:\n]*?):\s.*$/gm, '$1')
+    .replace(/\d+/g, '#');
+  return sha256(normalised);
+}
 
 /**
  * Draft-07, without the `$schema` key: Claude Code's validator rejects zod's default 2020-12
@@ -119,7 +134,7 @@ export async function askModel(
       adapter,
       model: `${cassette.model} (recorded ${cassette.recordedAt} via ${cassette.adapter})`,
       raw: cassette.raw,
-      promptChanged: cassette.promptSha256 !== sha256(prompt),
+      promptChanged: cassette.promptFingerprint !== promptFingerprint(prompt),
     };
   }
   const raw = adapter === 'claude-code' ? callClaudeCode(prompt) : await callAnthropic(prompt);
@@ -130,7 +145,8 @@ export async function askModel(
       adapter,
       model: env.HEAL_MODEL,
       recordedAt: new Date().toISOString(),
-      promptSha256: sha256(prompt),
+      promptFingerprint: promptFingerprint(prompt),
+      prompt,
       raw,
     };
     writeFileSync(cassettePath(target), `${JSON.stringify(cassette, null, 2)}\n`, 'utf8');

@@ -3,9 +3,12 @@
  * `this.<member> =` and `.describe(`. Assertions, expected values and step code are never part of
  * a patch, so a "heal" can't weaken a test.
  */
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
+import * as prettier from 'prettier';
 import type { Target } from './targets';
 
 const ROOT = path.resolve(__dirname, '..', '..');
@@ -43,19 +46,50 @@ export function withPatch<T>(target: Target, newExpression: string, fn: () => T)
   return result;
 }
 
-/** A unified diff of the one changed statement (`this.<member> = ...;`), for human review. */
-export function unifiedDiff(target: Target, newExpression: string): string {
-  const source = readFileSync(path.join(ROOT, target.file), 'utf8');
-  const statement = new RegExp(`[ \\t]*this\\.${target.member}\\s*=[\\s\\S]*?;`).exec(source);
-  if (!statement) throw new Error(`statement for ${target.member} not found in ${target.file}`);
-  const oldLines = statement[0].split('\n');
-  const newLines = statement[0].replace(target.expression, newExpression).split('\n');
-  const startLine = source.slice(0, statement.index).split('\n').length;
-  return [
-    `--- a/${target.file}`,
-    `+++ b/${target.file} (proposed, not applied)`,
-    `@@ -${startLine},${oldLines.length} +${startLine},${newLines.length} @@ ${target.member}: ${target.intent}`,
-    ...oldLines.map((l) => `-${l}`),
-    ...newLines.map((l) => `+${l}`),
-  ].join('\n');
+/**
+ * A standard unified diff (3 lines of context) of the proposed change, that `git apply` accepts.
+ * The patched file is formatted with the project's Prettier config first, so applying the patch
+ * leaves the codebase lint- and format-clean. The leading comment line is ignored by git apply.
+ */
+export function makeDiff(file: string, original: string, patched: string, note: string): string {
+  const dir = mkdtempSync(path.join(tmpdir(), 'heal-diff-'));
+  try {
+    writeFileSync(path.join(dir, 'a'), original, 'utf8');
+    writeFileSync(path.join(dir, 'b'), patched, 'utf8');
+    const run = spawnSync('git', ['diff', '--no-index', '--no-color', '-U3', 'a', 'b'], {
+      cwd: dir,
+      encoding: 'utf8',
+    });
+    if (run.status !== 1) throw new Error(`git diff failed: ${run.stderr || 'no differences'}`);
+    const body = run.stdout
+      .split('\n')
+      .filter((line) => !line.startsWith('index '))
+      .map((line) => {
+        if (line.startsWith('diff --git ')) return `diff --git a/${file} b/${file}`;
+        if (line.startsWith('--- ')) return `--- a/${file}`;
+        if (line.startsWith('+++ ')) return `+++ b/${file}`;
+        return line;
+      })
+      .join('\n');
+    return `# ${note}\n${body}`;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** The proposal for one target as an applicable patch, formatted like the rest of the code. */
+export async function unifiedDiff(target: Target, newExpression: string): Promise<string> {
+  const file = path.join(ROOT, target.file);
+  const original = readFileSync(file, 'utf8');
+  const options = (await prettier.resolveConfig(file)) ?? {};
+  const patched = await prettier.format(patchedSource(original, target, newExpression), {
+    ...options,
+    filepath: file,
+  });
+  return makeDiff(
+    target.file,
+    original,
+    patched,
+    `Proposed by \`npm run heal\` for ${target.member} ("${target.intent}"). NOT applied: review, then \`git apply\` this file.`,
+  );
 }

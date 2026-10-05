@@ -19,7 +19,8 @@ export class LegacyEmiCalculatorPage extends BasePage {
 
   /**
    * Broken #1: ambiguous accessible name (strict-mode violation). A loose regex name matches
-   * every link containing "Loan": 15 elements on the live page.
+   * every link containing "Loan": 15 elements on the live page, 13 in the tests (two of them are
+   * in sections only rendered when third-party scripts load, which the tests block).
    */
   readonly personalLoanTab: Locator;
 

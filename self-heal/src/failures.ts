@@ -59,9 +59,16 @@ export function classify(message: string): Classification {
   return { kind: 'other', healable: false, reason: 'not recognised as a locator failure' };
 }
 
-/** The "# Page snapshot" YAML block of an error-context.md file. */
+/**
+ * The accessibility snapshot in an error-context.md file: its ```yaml block.
+ *
+ * Don't anchor on the "# Page snapshot" heading: Playwright 1.63 writes it for ACTION failures
+ * (click/fill timeouts, strict mode) but not for failed `expect` assertions, where the yaml block
+ * follows "# Error details" directly. Anchoring on the heading silently sent "(not available)" to
+ * the model for 3 of the 5 broken locators in the first live run. Tested against real files.
+ */
 export function extractSnapshot(errorContext: string): string {
-  const match = /# Page snapshot\s*```yaml\n([\s\S]*?)```/.exec(errorContext);
+  const match = /```yaml\r?\n([\s\S]*?)\r?\n```/.exec(errorContext);
   return match?.[1]?.trim() ?? '';
 }
 
