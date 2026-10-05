@@ -9,6 +9,14 @@ Feature: Teams endpoint
     And the response matches the "team list" contract
     And the response contains 10 items
 
+  Scenario: Sort teams by name
+    When I request the teams list with:
+      | sort | name |
+    Then the response status is 200
+    And the response matches the "team list" contract
+    And the items are ordered by "name" ascending
+    And the item ids are, in order: "CSK, DC, GT, KKR, LSG, MI, PBKS, RR, RCB, SRH"
+
   Scenario: Sort teams by titles (descending), then by name
     When I request the teams list with:
       | sort | -titles,name |

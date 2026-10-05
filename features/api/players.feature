@@ -38,7 +38,7 @@ Feature: Players endpoint
       | sort    | -runs       |
     Then the response status is 200
     And the response matches the "player list" contract
-    And the item ids are, in order: "14, 15"
+    And the item names are, in order: "Sunil Narine, Andre Russell"
     And every player satisfies team "KKR"
     And every player satisfies role "ALL_ROUNDER"
 
@@ -49,15 +49,37 @@ Feature: Players endpoint
     Then the response status is 200
     And the response matches the "player list" contract
     And the items are ordered by "<field>" <direction>
-    And the first item has id <firstId>
+    And the first item is "<first>"
 
-    # title-format: sort=<sort>
+    # title-format: sort=<sort> puts <first> first
     Examples:
-      | sort        | field      | direction  | firstId |
-      | -runs       | runs       | descending | 1       |
-      | name        | name       | ascending  | 20      |
-      | -wickets    | wickets    | descending | 36      |
-      | -strikeRate | strikeRate | descending | 33      |
+      | sort        | field      | direction  | first              |
+      | name        | name       | ascending  | Abhishek Sharma    |
+      | -name       | name       | descending | Yuzvendra Chahal   |
+      | runs        | runs       | ascending  | Varun Chakravarthy |
+      | -runs       | runs       | descending | Virat Kohli        |
+      | wickets     | wickets    | ascending  | Virat Kohli        |
+      | -wickets    | wickets    | descending | Harshal Patel      |
+      | matches     | matches    | ascending  | Jake Fraser-McGurk |
+      | -matches    | matches    | descending | Abhishek Sharma    |
+      | strikeRate  | strikeRate | ascending  | Varun Chakravarthy |
+      | -strikeRate | strikeRate | descending | Jake Fraser-McGurk |
+
+  Scenario Outline: Multi-key sort breaks ties on the second key (<sort>)
+    Phil Salt and Yashasvi Jaiswal both have 435 runs, so only the second key orders them.
+
+    When I request the players list with:
+      | minRuns | 435    |
+      | maxRuns | 435    |
+      | sort    | <sort> |
+    Then the response status is 200
+    And the item names are, in order: "<names>"
+
+    # title-format: sort=<sort> orders the 435-run tie as <names>
+    Examples:
+      | sort        | names                       |
+      | -runs,name  | Phil Salt, Yashasvi Jaiswal |
+      | -runs,-name | Yashasvi Jaiswal, Phil Salt |
 
   Scenario: Second page and page size
     When I request the players list with:

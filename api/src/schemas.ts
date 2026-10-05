@@ -101,6 +101,9 @@ export const MatchesQuery = z
 export const TEAM_SORT_FIELDS = ['name', 'titles'] as const;
 export const TeamsQuery = z.strictObject({ sort: sortParam(TEAM_SORT_FIELDS).optional() });
 
+/** Endpoints that take no query parameters still reject unknown ones, consistently. */
+export const NoQuery = z.strictObject({});
+
 export const IdParam = z.object({
   id: z
     .string()

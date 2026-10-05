@@ -130,8 +130,13 @@ Then('the item ids are, in order: {string}', ({ ctx }, ids: string) => {
   expect(items(requireResponse(ctx)).map((row) => String(row.id))).toEqual(expected);
 });
 
-Then('the first item has id {int}', ({ ctx }, id: number) => {
-  expect(items(requireResponse(ctx))[0]?.id).toBe(id);
+Then('the item names are, in order: {string}', ({ ctx }, names: string) => {
+  const expected = names.split(',').map((s) => s.trim());
+  expect(items(requireResponse(ctx)).map((row) => String(row.name))).toEqual(expected);
+});
+
+Then('the first item is {string}', ({ ctx }, name: string) => {
+  expect(items(requireResponse(ctx))[0]?.name).toBe(name);
 });
 
 Then('the items are ordered by {string} {word}', ({ ctx }, field: string, dir: string) => {

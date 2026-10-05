@@ -9,6 +9,18 @@ Feature: Health, routing and method handling
     Then the response status is 200
     And the response matches the "health" contract
 
+  Scenario Outline: Endpoints without query parameters still reject unknown ones: <path>
+    When I send a GET request to "<path>?foo=1"
+    Then the response status is 400
+    And the response is a problem document with title "Bad Request"
+    And the problem lists an error for "foo" with code "unknown_parameter"
+
+    # title-format: GET <path>?foo=1 -> 400
+    Examples:
+      | path          |
+      | health        |
+      | api/players/1 |
+
   Scenario: Unknown route
     When I send a GET request to "api/nope"
     Then the response status is 404
@@ -17,7 +29,7 @@ Feature: Health, routing and method handling
   Scenario Outline: Unsupported methods on known paths are rejected with 405
     When I send a <method> request to "<path>"
     Then the response status is 405
-    And the response header "allow" is "GET"
+    And the response header "allow" is "GET, HEAD"
     And the response is a problem document with title "Method Not Allowed"
 
     # title-format: <method> <path> is not allowed

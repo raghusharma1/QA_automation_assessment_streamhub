@@ -46,6 +46,26 @@ Feature: Matches endpoint
       | from  | 2024-05-01 | 9     |
       | to    | 2024-03-31 | 7     |
 
+  Scenario: Paging through a season in date order
+    When I request the matches list with:
+      | season | 2024 |
+      | sort   | date |
+      | page   | 2    |
+      | limit  | 5    |
+    Then the response status is 200
+    And the response matches the "match list" contract
+    And the page metadata is page 2 of 5 with limit 5 and 24 results in total
+    And the item ids are, in order: "6, 7, 8, 9, 10"
+    And the items are ordered by "date" ascending
+
+  Scenario: Sort by id, descending
+    When I request the matches list with:
+      | season | 2024 |
+      | sort   | -id  |
+      | limit  | 3    |
+    Then the response status is 200
+    And the item ids are, in order: "24, 23, 22"
+
   Scenario: Date window, team and sort combined
     When I request the matches list with:
       | season | 2024       |
