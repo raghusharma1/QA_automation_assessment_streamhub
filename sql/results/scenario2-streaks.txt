@@ -1,4 +1,5 @@
 Scenario 2: 30+ runs in 3+ consecutive matches (primary: consecutive appearances)
+PostgreSQL 18.3
 
 player_name     | streak_start | streak_matches | streak_end | streak_runs
 ----------------+--------------+----------------+------------+------------

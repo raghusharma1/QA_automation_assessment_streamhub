@@ -1,3 +1,5 @@
+-- psql transcript: sql/scenario2-streaks/query-team-fixtures.sql on PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+
 -- Scenario 2, ALTERNATIVE interpretation: "consecutive matches" = consecutive matches PLAYED by
 -- the player's team. A match the team played without this player batting BREAKS the streak.
 -- A fixture abandoned without play is not a match played, so it breaks nothing.
@@ -39,3 +41,12 @@ JOIN players p ON p.player_id = h.player_id
 GROUP BY p.player_name, h.player_id, h.island_id
 HAVING COUNT(*) >= 3
 ORDER BY p.player_name COLLATE "C", streak_start;
+   player_name   | streak_start | streak_matches | streak_end 
+-----------------+--------------+----------------+------------
+ Faf du Plessis  | 2024-03-22   |              3 | 2024-04-15
+ Faf du Plessis  | 2024-04-28   |              3 | 2024-05-22
+ Ruturaj Gaikwad | 2024-04-23   |              3 | 2024-05-12
+ Sunil Narine    | 2024-05-05   |              3 | 2024-05-26
+ Virat Kohli     | 2024-03-22   |              5 | 2024-04-28
+(5 rows)
+

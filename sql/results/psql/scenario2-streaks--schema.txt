@@ -1,0 +1,84 @@
+-- psql \d transcript for sql/scenario2-streaks/schema.sql on PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+
+             Table "public.batting_scores"
+   Column    |  Type   | Collation | Nullable | Default 
+-------------+---------+-----------+----------+---------
+ match_id    | integer |           | not null | 
+ player_id   | integer |           | not null | 
+ runs        | integer |           | not null | 
+ balls_faced | integer |           | not null | 
+ is_not_out  | boolean |           | not null | false
+Indexes:
+    "batting_scores_pkey" PRIMARY KEY, btree (match_id, player_id)
+    "ix_bat_player" btree (player_id, match_id)
+Check constraints:
+    "batting_scores_balls_faced_check" CHECK (balls_faced >= 0)
+    "batting_scores_runs_check" CHECK (runs >= 0)
+Foreign-key constraints:
+    "batting_scores_match_id_fkey" FOREIGN KEY (match_id) REFERENCES matches(match_id)
+    "batting_scores_player_id_fkey" FOREIGN KEY (player_id) REFERENCES players(player_id)
+
+   Index "public.batting_scores_pkey"
+  Column   |  Type   | Key? | Definition 
+-----------+---------+------+------------
+ match_id  | integer | yes  | match_id
+ player_id | integer | yes  | player_id
+primary key, btree, for table "public.batting_scores"
+
+      Index "public.ix_bat_player"
+  Column   |  Type   | Key? | Definition 
+-----------+---------+------+------------
+ player_id | integer | yes  | player_id
+ match_id  | integer | yes  | match_id
+btree, for table "public.batting_scores"
+
+      Index "public.ix_match_season"
+   Column   |  Type   | Key? | Definition 
+------------+---------+------+------------
+ season     | integer | yes  | season
+ match_date | date    | yes  | match_date
+btree, for table "public.matches"
+
+                        Table "public.matches"
+   Column    |         Type          | Collation | Nullable | Default 
+-------------+-----------------------+-----------+----------+---------
+ match_id    | integer               |           | not null | 
+ season      | integer               |           | not null | 
+ match_date  | date                  |           | not null | 
+ stage       | character varying(12) |           | not null | 
+ venue       | character varying(60) |           | not null | 
+ home_team   | character varying(5)  |           | not null | 
+ away_team   | character varying(5)  |           | not null | 
+ winner_team | character varying(5)  |           |          | 
+ abandoned   | boolean               |           | not null | false
+Indexes:
+    "matches_pkey" PRIMARY KEY, btree (match_id)
+    "ix_match_season" btree (season, match_date)
+Check constraints:
+    "matches_check" CHECK (home_team::text <> away_team::text)
+Referenced by:
+    TABLE "batting_scores" CONSTRAINT "batting_scores_match_id_fkey" FOREIGN KEY (match_id) REFERENCES matches(match_id)
+
+      Index "public.matches_pkey"
+  Column  |  Type   | Key? | Definition 
+----------+---------+------+------------
+ match_id | integer | yes  | match_id
+primary key, btree, for table "public.matches"
+
+                        Table "public.players"
+   Column    |          Type          | Collation | Nullable | Default 
+-------------+------------------------+-----------+----------+---------
+ player_id   | integer                |           | not null | 
+ player_name | character varying(100) |           | not null | 
+ team_id     | character varying(5)   |           | not null | 
+Indexes:
+    "players_pkey" PRIMARY KEY, btree (player_id)
+Referenced by:
+    TABLE "batting_scores" CONSTRAINT "batting_scores_player_id_fkey" FOREIGN KEY (player_id) REFERENCES players(player_id)
+
+       Index "public.players_pkey"
+  Column   |  Type   | Key? | Definition 
+-----------+---------+------+------------
+ player_id | integer | yes  | player_id
+primary key, btree, for table "public.players"
+

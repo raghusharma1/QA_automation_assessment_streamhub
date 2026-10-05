@@ -42,27 +42,21 @@ const readJson = <T>(...segments: string[]): T =>
 const text = (value: string) => `'${value.replace(/'/g, "''")}'`;
 const nullable = (value: string | null) => (value === null ? 'NULL' : text(value));
 
-/**
- * In this dataset the only no-result match (2024-05-13, GT v KKR) was washed out without a ball
- * bowled, so "no winner" is used as "abandoned". With real data you would store that explicitly.
- */
-const isAbandoned = (m: Match) => m.winnerTeamId === null;
-
 export function buildIplSeed(): string {
   const players = readJson<Player[]>('api', 'data', 'players.json');
   const matches = readJson<Match[]>('api', 'data', 'matches.json');
-  const { extraMatches, innings } = readJson<{ extraMatches: Match[]; innings: Innings[] }>(
-    'sql',
-    'scenario2-streaks',
-    'innings.json',
-  );
+  const { abandonedMatchIds, extraMatches, innings } = readJson<{
+    abandonedMatchIds: number[];
+    extraMatches: Match[];
+    innings: Innings[];
+  }>('sql', 'scenario2-streaks', 'innings.json');
   const allMatches = [...matches, ...extraMatches].sort((a, b) => a.id - b.id);
 
   const playerRows = players.map((p) => `(${p.id}, ${text(p.name)}, ${text(p.teamId)})`);
   const matchRows = allMatches.map(
     (m) =>
       `(${m.id}, ${m.season}, ${text(m.date)}, ${text(m.stage)}, ${text(m.venue)}, ` +
-      `${text(m.homeTeamId)}, ${text(m.awayTeamId)}, ${nullable(m.winnerTeamId)}, ${isAbandoned(m)})`,
+      `${text(m.homeTeamId)}, ${text(m.awayTeamId)}, ${nullable(m.winnerTeamId)}, ${abandonedMatchIds.includes(m.id)})`,
   );
   const inningsRows = innings.map(
     (i) => `(${i.matchId}, ${i.playerId}, ${i.runs}, ${i.balls}, ${i.notOut})`,

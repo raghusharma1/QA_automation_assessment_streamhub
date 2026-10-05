@@ -1,3 +1,5 @@
+-- psql transcript: sql/scenario2-streaks/query-lag-lead.sql on PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+
 -- Scenario 2, alternative technique: LAG/LEAD look-around (same interpretation as query.sql).
 -- A row is a streak START when it is 30+, the next two innings are 30+, and the previous innings
 -- is not 30+ (or doesn't exist). The last condition stops a 5-match streak producing 3 start rows.
@@ -26,3 +28,13 @@ WHERE la.runs       >= 30
   AND la.next2_runs >= 30
   AND (la.prev_runs IS NULL OR la.prev_runs < 30)
 ORDER BY p.player_name COLLATE "C", la.match_date;
+   player_name   | streak_start 
+-----------------+--------------
+ Andre Russell   | 2024-03-23
+ Faf du Plessis  | 2024-03-22
+ Faf du Plessis  | 2024-04-28
+ Ruturaj Gaikwad | 2024-04-23
+ Sunil Narine    | 2024-05-05
+ Virat Kohli     | 2024-03-22
+(6 rows)
+

@@ -1,0 +1,51 @@
+-- psql transcript: sql/scenario1-round-trips/query-one-to-one.sql on PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+
+-- Scenario 1, variant: one-to-one matching (no transaction used twice).
+-- 1. each return is attributed to its NEAREST preceding original;
+-- 2. each original then keeps only its EARLIEST remaining return.
+-- A deterministic greedy rule (good for alerting), not an optimal bipartite matching.
+WITH candidates AS (
+    SELECT o.txn_id       AS original_txn_id, r.txn_id     AS return_txn_id,
+           o.from_account AS account_a,       o.to_account AS account_b,
+           o.amount       AS original_amount, r.amount     AS return_amount,
+           o.created_at   AS original_at,     r.created_at AS return_at
+    FROM transactions o
+    JOIN transactions r
+      ON  r.from_account = o.to_account
+      AND r.to_account   = o.from_account
+      AND r.created_at   >  o.created_at
+      AND r.created_at   <= o.created_at + INTERVAL '24 hours'
+    WHERE o.from_account <> o.to_account
+      AND ABS(r.amount - o.amount) <= 0.10 * o.amount
+),
+per_return AS (
+    SELECT c.*, ROW_NUMBER() OVER (PARTITION BY return_txn_id
+                                   ORDER BY original_at DESC, original_txn_id DESC) AS rn_return
+    FROM candidates c
+),
+per_original AS (
+    SELECT p.*, ROW_NUMBER() OVER (PARTITION BY original_txn_id
+                                   ORDER BY return_at, return_txn_id) AS rn_original
+    FROM per_return p
+    WHERE rn_return = 1
+)
+SELECT original_txn_id, return_txn_id, account_a, account_b,
+       original_amount, return_amount,
+       ROUND(100.0 * (return_amount - original_amount) / original_amount, 2) AS pct_diff,
+       original_at, return_at
+FROM per_original
+WHERE rn_original = 1
+ORDER BY original_at;
+ original_txn_id | return_txn_id | account_a | account_b | original_amount | return_amount | pct_diff |     original_at     |      return_at      
+-----------------+---------------+-----------+-----------+-----------------+---------------+----------+---------------------+---------------------
+               1 |             2 | ACC001    | ACC002    |         1000.00 |        950.00 |    -5.00 | 2024-03-01 09:00:00 | 2024-03-01 15:30:00
+               3 |             4 | ACC003    | ACC004    |          100.00 |        110.00 |    10.00 | 2024-03-02 10:00:00 | 2024-03-02 12:00:00
+               7 |             8 | ACC007    | ACC008    |          500.00 |        500.00 |     0.00 | 2024-03-04 08:00:00 | 2024-03-05 08:00:00
+              11 |            12 | ACC012    | ACC011    |          300.00 |        300.00 |     0.00 | 2024-03-08 07:00:00 | 2024-03-08 09:00:00
+              14 |            15 | ACC001    | ACC002    |         2000.00 |       1900.00 |    -5.00 | 2024-03-10 11:00:00 | 2024-03-10 18:00:00
+              16 |            17 | ACC003    | ACC004    |          400.00 |        400.00 |     0.00 | 2024-03-11 09:00:00 | 2024-03-11 10:00:00
+              24 |            25 | ACC009    | ACC011    |          250.00 |        225.00 |   -10.00 | 2024-03-14 09:00:00 | 2024-03-14 09:30:00
+              27 |            28 | ACC013    | ACC014    |          100.00 |        100.00 |     0.00 | 2024-03-16 09:00:00 | 2024-03-16 10:00:00
+              28 |            29 | ACC014    | ACC013    |          100.00 |        100.00 |     0.00 | 2024-03-16 10:00:00 | 2024-03-16 11:00:00
+(9 rows)
+

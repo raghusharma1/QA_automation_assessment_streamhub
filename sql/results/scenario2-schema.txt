@@ -1,0 +1,23 @@
+Scenario 2: table schema
+PostgreSQL 18.3
+
+table_name     | column_name | data_type         | is_nullable | column_default
+---------------+-------------+-------------------+-------------+---------------
+batting_scores | match_id    | integer           | NO          | NULL          
+batting_scores | player_id   | integer           | NO          | NULL          
+batting_scores | runs        | integer           | NO          | NULL          
+batting_scores | balls_faced | integer           | NO          | NULL          
+batting_scores | is_not_out  | boolean           | NO          | false         
+matches        | match_id    | integer           | NO          | NULL          
+matches        | season      | integer           | NO          | NULL          
+matches        | match_date  | date              | NO          | NULL          
+matches        | stage       | character varying | NO          | NULL          
+matches        | venue       | character varying | NO          | NULL          
+matches        | home_team   | character varying | NO          | NULL          
+matches        | away_team   | character varying | NO          | NULL          
+matches        | winner_team | character varying | YES         | NULL          
+matches        | abandoned   | boolean           | NO          | false         
+players        | player_id   | integer           | NO          | NULL          
+players        | player_name | character varying | NO          | NULL          
+players        | team_id     | character varying | NO          | NULL          
+(17 rows)

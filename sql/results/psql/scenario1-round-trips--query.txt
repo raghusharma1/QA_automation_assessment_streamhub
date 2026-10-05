@@ -1,0 +1,39 @@
+-- psql transcript: sql/scenario1-round-trips/query.sql on PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+
+-- Scenario 1: every (original, return) pair where B sends a similar amount back to A within 24h.
+-- Definitions: sql/README.md. "Similar" = within 10% of the ORIGINAL amount, inclusive.
+SELECT
+    o.txn_id                                                      AS original_txn_id,
+    o.from_account                                                AS account_a,
+    o.to_account                                                  AS account_b,
+    o.amount                                                      AS original_amount,
+    o.created_at                                                  AS original_at,
+    r.txn_id                                                      AS return_txn_id,
+    r.amount                                                      AS return_amount,
+    r.created_at                                                  AS return_at,
+    ROUND(100.0 * (r.amount - o.amount) / o.amount, 2)            AS pct_diff,
+    ROUND(EXTRACT(EPOCH FROM r.created_at - o.created_at) / 3600, 2) AS gap_hours
+FROM transactions o
+JOIN transactions r
+  ON  r.from_account = o.to_account                            -- B pays ...
+  AND r.to_account   = o.from_account                          -- ... back to A
+  AND r.created_at   >  o.created_at                           -- strictly after the original
+  AND r.created_at   <= o.created_at + INTERVAL '24 hours'     -- at most exactly 24h later
+WHERE o.from_account <> o.to_account                           -- ignore self-transfers
+  AND ABS(r.amount - o.amount) <= 0.10 * o.amount              -- within 10% of the original
+ORDER BY o.created_at, r.created_at;
+ original_txn_id | account_a | account_b | original_amount |     original_at     | return_txn_id | return_amount |      return_at      | pct_diff | gap_hours 
+-----------------+-----------+-----------+-----------------+---------------------+---------------+---------------+---------------------+----------+-----------
+               1 | ACC001    | ACC002    |         1000.00 | 2024-03-01 09:00:00 |             2 |        950.00 | 2024-03-01 15:30:00 |    -5.00 |      6.50
+               3 | ACC003    | ACC004    |          100.00 | 2024-03-02 10:00:00 |             4 |        110.00 | 2024-03-02 12:00:00 |    10.00 |      2.00
+               7 | ACC007    | ACC008    |          500.00 | 2024-03-04 08:00:00 |             8 |        500.00 | 2024-03-05 08:00:00 |     0.00 |     24.00
+              11 | ACC012    | ACC011    |          300.00 | 2024-03-08 07:00:00 |            12 |        300.00 | 2024-03-08 09:00:00 |     0.00 |      2.00
+              13 | ACC001    | ACC002    |         2000.00 | 2024-03-10 10:00:00 |            15 |       1900.00 | 2024-03-10 18:00:00 |    -5.00 |      8.00
+              14 | ACC001    | ACC002    |         2000.00 | 2024-03-10 11:00:00 |            15 |       1900.00 | 2024-03-10 18:00:00 |    -5.00 |      7.00
+              16 | ACC003    | ACC004    |          400.00 | 2024-03-11 09:00:00 |            17 |        400.00 | 2024-03-11 10:00:00 |     0.00 |      1.00
+              16 | ACC003    | ACC004    |          400.00 | 2024-03-11 09:00:00 |            18 |        380.00 | 2024-03-11 12:00:00 |    -5.00 |      3.00
+              24 | ACC009    | ACC011    |          250.00 | 2024-03-14 09:00:00 |            25 |        225.00 | 2024-03-14 09:30:00 |   -10.00 |      0.50
+              27 | ACC013    | ACC014    |          100.00 | 2024-03-16 09:00:00 |            28 |        100.00 | 2024-03-16 10:00:00 |     0.00 |      1.00
+              28 | ACC014    | ACC013    |          100.00 | 2024-03-16 10:00:00 |            29 |        100.00 | 2024-03-16 11:00:00 |     0.00 |      1.00
+(11 rows)
+

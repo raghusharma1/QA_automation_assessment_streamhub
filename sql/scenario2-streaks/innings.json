@@ -1,5 +1,7 @@
 {
   "_comment": "Batting innings for the streak scenario, on top of api/data/players.json and matches.json. Illustrative sample data, not official statistics. Each player's innings form one edge case (sql/README.md).",
+  "abandonedMatchIds": [19],
+  "_abandonedComment": "Matches washed out without a ball bowled (not 'matches played'). Explicit, not inferred from a missing winner: a tie or a no-result after play would not be abandoned.",
   "extraMatches": [
     {
       "_comment": "Previous season, just before the 2024 opener: must never start or extend a 2024 streak.",

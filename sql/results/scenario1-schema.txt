@@ -1,0 +1,14 @@
+Scenario 1: table schema
+PostgreSQL 18.3
+
+table_name   | column_name  | data_type                   | is_nullable | column_default
+-------------+--------------+-----------------------------+-------------+---------------
+accounts     | account_id   | character varying           | NO          | NULL          
+accounts     | holder_name  | character varying           | NO          | NULL          
+accounts     | opened_at    | timestamp without time zone | NO          | NULL          
+transactions | txn_id       | integer                     | NO          | NULL          
+transactions | from_account | character varying           | NO          | NULL          
+transactions | to_account   | character varying           | NO          | NULL          
+transactions | amount       | numeric                     | NO          | NULL          
+transactions | created_at   | timestamp without time zone | NO          | NULL          
+(8 rows)

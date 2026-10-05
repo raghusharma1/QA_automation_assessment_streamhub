@@ -1,4 +1,5 @@
 Scenario 2: LAG/LEAD technique (name + start date)
+PostgreSQL 18.3
 
 player_name     | streak_start
 ----------------+-------------

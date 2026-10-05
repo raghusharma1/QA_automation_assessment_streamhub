@@ -12,7 +12,9 @@ INSERT INTO accounts (account_id, holder_name, opened_at) VALUES
 ('ACC009', 'Isha Gupta',   '2023-09-18 10:00:00'),
 ('ACC010', 'Jay Patel',    '2023-10-19 10:00:00'),
 ('ACC011', 'Kavya Menon',  '2023-11-20 10:00:00'),
-('ACC012', 'Lakshay Jain', '2023-12-21 10:00:00');
+('ACC012', 'Lakshay Jain', '2023-12-21 10:00:00'),
+('ACC013', 'Meera Pillai', '2024-01-05 10:00:00'),
+('ACC014', 'Nikhil Bose',  '2024-01-06 10:00:00');
 
 INSERT INTO transactions (txn_id, from_account, to_account, amount, created_at) VALUES
 -- E1  basic round trip, -5%, 6h30m                          -> match (1,2)
@@ -52,4 +54,9 @@ INSERT INTO transactions (txn_id, from_account, to_account, amount, created_at) 
 (24, 'ACC009', 'ACC011',  250.00, '2024-03-14 09:00:00'),
 (25, 'ACC011', 'ACC009',  225.00, '2024-03-14 09:30:00'),
 -- E12 one-way transfer, never returned                      -> no match
-(26, 'ACC010', 'ACC012',  999.00, '2024-03-15 09:00:00');
+(26, 'ACC010', 'ACC012',  999.00, '2024-03-15 09:00:00'),
+-- E13 ping-pong A->B->A->B within 24h: 28 is the return of 27 AND the original of 29
+--     -> two overlapping pairs (27,28), (28,29); one-to-one keeps both (28 once per side)
+(27, 'ACC013', 'ACC014',  100.00, '2024-03-16 09:00:00'),
+(28, 'ACC014', 'ACC013',  100.00, '2024-03-16 10:00:00'),
+(29, 'ACC013', 'ACC014',  100.00, '2024-03-16 11:00:00');

@@ -10,7 +10,17 @@ npm run sql:evidence    # same, and (re)write the screenshots + raw outputs in s
 ```
 
 Every `.sql` file also runs unchanged in any PostgreSQL 14+ client (psql, DB Fiddle, pgAdmin):
-run `schema.sql`, then `seed.sql`, then a query.
+run `schema.sql`, then `seed.sql`, then a query. PostgreSQL 14 is the minimum because
+`EXTRACT` returns `numeric` from 14 on.
+
+**Verified on a real server, not only PGlite:** `bash sql/scripts/run-in-docker.sh` runs every
+schema, seed and query with `psql` in the official `postgres:18` Docker image (a throwaway
+container that is removed afterwards). The transcripts, with the server's `version()` and the
+`\d` schema output, are in [results/psql/](results/psql). PostgreSQL 18.6 returned exactly the
+rows the tests expect.
+
+The table schemas are also captured as screenshots:
+[scenario 1](results/scenario1-schema.png) · [scenario 2](results/scenario2-schema.png).
 
 | Scenario                | Folder (schema, seed, queries)                  | Results: screenshot (raw text)                                                                                                                                                                                                                                                                           |
 | ----------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -41,22 +51,30 @@ queries were run. They are never generated from the queries themselves.
 
 Money is `NUMERIC(14,2)` (exact decimal), so the 10% boundary is not subject to floating-point error.
 
+The one-to-one variant uses each transaction at most once **per side**: in a ping-pong
+A→B→A→B (E13) the middle transfer is the return of the first pair and the original of the second.
+
+Timestamps are `TIMESTAMP` (without time zone), so "24 hours" means wall-clock time in one implied
+zone. A real ledger should store `timestamptz` (UTC), so the window is exact across zones and
+daylight-saving changes.
+
 ### Edge cases in the seed (expected result worked out by hand)
 
-| Case                         | Txns       | Expected                                 |
-| ---------------------------- | ---------- | ---------------------------------------- |
-| E1 basic: −5%, 6h30m         | 1, 2       | match                                    |
-| E2 exactly +10.00%           | 3, 4       | match (inclusive)                        |
-| E3 +10.01%                   | 5, 6       | no match                                 |
-| E4 exactly 24h00m00s         | 7, 8       | match (inclusive)                        |
-| E5 24h00m01s                 | 9, 10      | no match                                 |
-| E6 B pays first, A pays back | 11, 12     | match **once**, original = 11            |
-| E7 two originals, one return | 13, 14, 15 | (13,15) and (14,15); one-to-one: (14,15) |
-| E8 one original, two returns | 16, 17, 18 | (16,17) and (16,18); one-to-one: (16,17) |
-| E9 self-transfer twice       | 19, 20     | no match                                 |
-| E10 A→B→C→A cycle            | 21, 22, 23 | no match                                 |
-| E11 exactly −10.00%          | 24, 25     | match (inclusive)                        |
-| E12 one-way transfer         | 26         | no match                                 |
+| Case                             | Txns       | Expected                                   |
+| -------------------------------- | ---------- | ------------------------------------------ |
+| E1 basic: −5%, 6h30m             | 1, 2       | match                                      |
+| E2 exactly +10.00%               | 3, 4       | match (inclusive)                          |
+| E3 +10.01%                       | 5, 6       | no match                                   |
+| E4 exactly 24h00m00s             | 7, 8       | match (inclusive)                          |
+| E5 24h00m01s                     | 9, 10      | no match                                   |
+| E6 B pays first, A pays back     | 11, 12     | match **once**, original = 11              |
+| E7 two originals, one return     | 13, 14, 15 | (13,15) and (14,15); one-to-one: (14,15)   |
+| E8 one original, two returns     | 16, 17, 18 | (16,17) and (16,18); one-to-one: (16,17)   |
+| E9 self-transfer twice           | 19, 20     | no match                                   |
+| E10 A→B→C→A cycle                | 21, 22, 23 | no match                                   |
+| E11 exactly −10.00%              | 24, 25     | match (inclusive)                          |
+| E12 one-way transfer             | 26         | no match                                   |
+| E13 ping-pong A→B→A→B within 24h | 27, 28, 29 | (27,28) and (28,29); one-to-one keeps both |
 
 ---
 
@@ -111,6 +129,13 @@ The filter `runs >= 30` must sit **between** the two `ROW_NUMBER()`s. Window fun
 | Travis Head (SRH)     | 62, 89, 25, 102, 34, 0                                        | none                              | none          | two streaks of 2 are not enough                                       |
 | Andre Russell (KKR)   | 64, 41, _did not bat_, 37, 35                                 | 1 row: from 2024-03-23, 4 matches | **none**      | the case that separates the two interpretations                       |
 | Sunil Narine (KKR)    | 2, 85, 10, 81, _(match 19 washed out)_, 39, 31                | 1 row: from 2024-05-05, 3 matches | same          | a fixture with no play does not break a streak                        |
+
+### Ordering and collation
+
+Results are ordered by `player_name COLLATE "C"`, so the order is identical on every server.
+PGlite runs with the `C` collation, while a default `en_US.UTF-8` database would sort "MS Dhoni"
+after "Mohammed Siraj". (The API tests caught exactly that case-ordering bug in the API's own
+sort; see docs/ai-log.md.)
 
 ### Indexes
 

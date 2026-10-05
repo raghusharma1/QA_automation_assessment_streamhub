@@ -1,0 +1,51 @@
+-- psql \d transcript for sql/scenario1-round-trips/schema.sql on PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+
+                          Table "public.accounts"
+   Column    |            Type             | Collation | Nullable | Default 
+-------------+-----------------------------+-----------+----------+---------
+ account_id  | character varying(10)       |           | not null | 
+ holder_name | character varying(100)      |           | not null | 
+ opened_at   | timestamp without time zone |           | not null | 
+Indexes:
+    "accounts_pkey" PRIMARY KEY, btree (account_id)
+Referenced by:
+    TABLE "transactions" CONSTRAINT "transactions_from_account_fkey" FOREIGN KEY (from_account) REFERENCES accounts(account_id)
+    TABLE "transactions" CONSTRAINT "transactions_to_account_fkey" FOREIGN KEY (to_account) REFERENCES accounts(account_id)
+
+              Index "public.accounts_pkey"
+   Column   |         Type          | Key? | Definition 
+------------+-----------------------+------+------------
+ account_id | character varying(10) | yes  | account_id
+primary key, btree, for table "public.accounts"
+
+                 Index "public.ix_txn_pair_time"
+    Column    |            Type             | Key? |  Definition  
+--------------+-----------------------------+------+--------------
+ from_account | character varying(10)       | yes  | from_account
+ to_account   | character varying(10)       | yes  | to_account
+ created_at   | timestamp without time zone | yes  | created_at
+btree, for table "public.transactions"
+
+                         Table "public.transactions"
+    Column    |            Type             | Collation | Nullable | Default 
+--------------+-----------------------------+-----------+----------+---------
+ txn_id       | integer                     |           | not null | 
+ from_account | character varying(10)       |           | not null | 
+ to_account   | character varying(10)       |           | not null | 
+ amount       | numeric(14,2)               |           | not null | 
+ created_at   | timestamp without time zone |           | not null | 
+Indexes:
+    "transactions_pkey" PRIMARY KEY, btree (txn_id)
+    "ix_txn_pair_time" btree (from_account, to_account, created_at)
+Check constraints:
+    "transactions_amount_check" CHECK (amount > 0::numeric)
+Foreign-key constraints:
+    "transactions_from_account_fkey" FOREIGN KEY (from_account) REFERENCES accounts(account_id)
+    "transactions_to_account_fkey" FOREIGN KEY (to_account) REFERENCES accounts(account_id)
+
+   Index "public.transactions_pkey"
+ Column |  Type   | Key? | Definition 
+--------+---------+------+------------
+ txn_id | integer | yes  | txn_id
+primary key, btree, for table "public.transactions"
+

@@ -1,7 +1,7 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { PGlite, types } from '@electric-sql/pglite';
-import type { Page, TestInfo } from '@playwright/test';
+import { expect, type Page, type TestInfo } from '@playwright/test';
 import { env } from '../../src/config/env';
 
 export const SQL_DIR = path.resolve(__dirname, '..', '..', 'sql');
@@ -10,6 +10,12 @@ const RESULTS_DIR = path.join(SQL_DIR, 'results');
 /** A result row. COUNT/SUM come back as bigint (PostgreSQL BIGINT). */
 export type Cell = string | number | bigint | boolean | null;
 export type Row = Record<string, Cell>;
+
+/** The created tables and columns (portable equivalent of psql's \d), for the schema evidence. */
+export const SCHEMA_SQL = `SELECT table_name, column_name, data_type, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_schema = 'public'
+ORDER BY table_name, ordinal_position;`;
 
 export const readSql = (...segments: string[]) =>
   readFileSync(path.join(SQL_DIR, ...segments), 'utf8');
@@ -56,7 +62,13 @@ const escapeHtml = (s: string) =>
  * This is the "screenshot of the query output" the assessment asks for, produced on every run
  * instead of by hand.
  */
-async function screenshotResult(page: Page, title: string, sql: string, rows: Row[]) {
+async function screenshotResult(
+  page: Page,
+  title: string,
+  serverVersion: string,
+  sql: string,
+  rows: Row[],
+) {
   const columns = rows[0] ? Object.keys(rows[0]) : [];
   const cell = (v: Cell | undefined) =>
     v === null || v === undefined ? '<i>NULL</i>' : escapeHtml(String(v));
@@ -68,7 +80,7 @@ async function screenshotResult(page: Page, title: string, sql: string, rows: Ro
     th, td { border: 1px solid #d1d9e0; padding: 4px 10px; text-align: left; white-space: nowrap; } th { background: #f6f8fa; }
   </style></head><body>
     <h1>${escapeHtml(title)}</h1>
-    <div class="meta">PostgreSQL (PGlite) · ${rows.length} row${rows.length === 1 ? '' : 's'}</div>
+    <div class="meta">${escapeHtml(serverVersion)} (PGlite, in-process) · ${rows.length} row${rows.length === 1 ? '' : 's'}</div>
     <pre>${escapeHtml(sql.trim())}</pre>
     <table><thead><tr>${columns.map((c) => `<th>${escapeHtml(c)}</th>`).join('')}</tr></thead>
     <tbody>${rows.map((r) => `<tr>${columns.map((c) => `<td>${cell(r[c])}</td>`).join('')}</tr>`).join('')}</tbody></table>
@@ -80,22 +92,44 @@ async function screenshotResult(page: Page, title: string, sql: string, rows: Ro
  * Attaches the result (text table + PNG) to the Playwright/Cucumber reports, and with
  * SQL_EVIDENCE=true (npm run sql:evidence) also writes them to sql/results/ for the repository.
  */
+/** e.g. "PostgreSQL 18.3" (the full version() string, trimmed to the product and version). */
+export async function serverVersion(db: PGlite): Promise<string> {
+  const { rows } = await db.query<{ version: string }>('SELECT version()');
+  return /^PostgreSQL [\d.]+/.exec(rows[0]?.version ?? '')?.[0] ?? 'PostgreSQL';
+}
+
+/**
+ * Attaches the result (text table + PNG) to the reports. With SQL_EVIDENCE=true
+ * (npm run sql:evidence) it (re)writes them to sql/results/. Otherwise it checks that the
+ * committed text output still matches, so the evidence in the repository can't silently drift
+ * from the queries. (PNGs are not byte-compared; they are regenerated together with the text.)
+ */
 export async function recordEvidence(
   page: Page,
   testInfo: TestInfo,
+  db: PGlite,
   name: string,
   title: string,
   sql: string,
   rows: Row[],
 ): Promise<void> {
+  const version = await serverVersion(db);
   const table = toTextTable(rows);
-  const png = await screenshotResult(page, title, sql, rows);
-  await testInfo.attach(`${name}.txt`, { body: table, contentType: 'text/plain' });
+  const text = [title, version, '', table, ''].join('\n');
+  const png = await screenshotResult(page, title, version, sql, rows);
+  await testInfo.attach(`${name}.txt`, { body: text, contentType: 'text/plain' });
   await testInfo.attach(`${name}.png`, { body: png, contentType: 'image/png' });
 
+  const txtPath = path.join(RESULTS_DIR, `${name}.txt`);
   if (env.SQL_EVIDENCE) {
     mkdirSync(RESULTS_DIR, { recursive: true });
     writeFileSync(path.join(RESULTS_DIR, `${name}.png`), png);
-    writeFileSync(path.join(RESULTS_DIR, `${name}.txt`), `${title}\n\n${table}\n`, 'utf8');
+    writeFileSync(txtPath, text, 'utf8');
+  } else {
+    expect(existsSync(txtPath), `${name}.txt missing: run \`npm run sql:evidence\``).toBe(true);
+    expect(
+      readFileSync(txtPath, 'utf8'),
+      'committed evidence is stale: run `npm run sql:evidence`',
+    ).toBe(text);
   }
 }
