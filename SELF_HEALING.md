@@ -187,7 +187,7 @@ So: heal **in the pipeline, not in the test**. Propose, validate hard, and let a
 - CI runs `test:broken`-style triage on failures, runs the healer, and posts `healing-report.md` and the patches as a PR comment, or opens a PR with the patch for review.
 - Accepted patches are ordinary commits, so history shows what changed and why.
 - Track heal acceptance rate and repeat offenders. A locator healed twice is a sign the page needs a `data-testid`.
-- Prefer prevention: the static lint in CI (`--strict`), test ids agreed with developers, and role-based locators.
+- Prefer prevention: the static lint in CI (`--strict --exclude=src/pages/legacy` in `.github/workflows/ci.yml`; legacy is broken on purpose), test ids agreed with developers, and role-based locators.
 
 ## 7. Compared with Playwright's own healer
 

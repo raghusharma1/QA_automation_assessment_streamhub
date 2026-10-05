@@ -1,0 +1,53 @@
+# UI tests against the live https://emicalculator.net (Section B3).
+# Kept out of ci.yml on purpose: this suite depends on a third-party site, so red here can mean
+# the site changed or was down, not that our code is wrong. Check the report before acting.
+name: Live UI
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '30 2 * * *' # nightly, 02:30 UTC: catches site drift even without commits
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-ui-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TEST_ENV: ci # env/ci.env: retries 2, 2 workers, longer timeouts, third-party hosts blocked
+
+jobs:
+  ui:
+    name: EMI calculator (live site)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: UI tests
+        run: npx bddgen && npx playwright test --project=ui
+
+      - name: Upload reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-live-ui
+          path: |
+            reports/playwright-html/
+            reports/cucumber/
+            reports/playwright-results.json
+            reports/test-results/
+          retention-days: 30

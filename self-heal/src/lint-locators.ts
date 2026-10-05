@@ -3,6 +3,8 @@
  *
  *   npm run lint:locators             # report findings
  *   npm run lint:locators -- --strict # exit 1 on any finding that is not allowlisted
+ *   npm run lint:locators -- --strict --exclude=src/pages/legacy
+ *                                     # CI: skip the page object that is broken on purpose
  *
  * A finding can be accepted with a justified comment on the same or previous line:
  *   // locator-lint-allow: <why this is safe here>
@@ -92,9 +94,14 @@ function tsFiles(dir: string): string[] {
 
 if (require.main === module) {
   const root = path.resolve(__dirname, '..', '..');
-  const findings = tsFiles(path.join(root, 'src')).flatMap((f) =>
-    lintSource(readFileSync(f, 'utf8'), path.relative(root, f).split(path.sep).join('/')),
-  );
+  const excluded = process.argv
+    .filter((a) => a.startsWith('--exclude='))
+    .map((a) => a.slice('--exclude='.length).replace(/\/?$/, '/'));
+  const findings = tsFiles(path.join(root, 'src'))
+    .map((f) => path.relative(root, f).split(path.sep).join('/'))
+    .filter((rel) => !excluded.some((prefix) => rel.startsWith(prefix)))
+    .flatMap((rel) => lintSource(readFileSync(path.join(root, rel), 'utf8'), rel));
+  if (excluded.length > 0) console.log(`Excluded: ${excluded.join(', ')}\n`);
   const open = findings.filter((f) => !f.allowed);
   for (const f of findings) {
     const status = f.allowed ? `allowed (${f.allowed})` : 'BRITTLE';

@@ -28,7 +28,9 @@ export default defineConfig({
     headless: env.HEADLESS,
     actionTimeout: 5_000,
     screenshot: 'only-on-failure',
-    trace: 'retain-on-failure',
+    // Every scenario here fails by design, and the report is committed as evidence: traces
+    // would add ~14 MB without helping the healer, which reads error-context.md + results.json.
+    trace: 'off',
   },
   projects: [
     {

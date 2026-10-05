@@ -16,6 +16,8 @@ playwright/.cache/
 # Transient run output. Curated results are committed under reports/ deliberately.
 reports/test-results/
 reports/.last-run.json
+reports/self-healing/test-results/
+reports/self-healing/heal-runs/
 
 # OS / editor
 .DS_Store

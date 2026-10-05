@@ -1,0 +1,100 @@
+# Hard gates: everything here is deterministic (no external site), so red means a code problem.
+# The live EMI calculator suite runs in live-ui.yml, so an outage there never turns this red.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TEST_ENV: ci
+
+jobs:
+  gates:
+    name: Static checks + unit, SQL and API tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The SQL project renders its result tables to PNG, so it needs a browser.
+      - run: npx playwright install --with-deps chromium
+
+      - name: Typecheck, lint, format
+        run: npm run check
+
+      # src/pages/legacy/ is broken on purpose (AI self-healing exercise), so it is excluded.
+      - name: Brittle-locator lint (strict)
+        run: npm run lint:locators -- --strict --exclude=src/pages/legacy
+
+      - name: Unit, SQL and API tests
+        run: npx bddgen && npx playwright test --project=unit --project=sql --project=api
+
+      - name: Upload reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-gates
+          path: |
+            reports/playwright-html/
+            reports/cucumber/
+            reports/playwright-results.json
+            reports/test-results/
+          retention-days: 30
+
+  self-healing:
+    # Evidence, not a gate: the broken suite is red by design, and the healer re-validates its
+    # proposals against the live site. Replay mode uses the recorded model responses, so CI
+    # needs no Claude login or API key.
+    name: Self-healing evidence (broken suite + healer replay)
+    needs: gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: Broken-locator suite (expected to fail)
+        continue-on-error: true
+        run: npm run test:broken
+
+      - name: Healer (replayed model responses)
+        continue-on-error: true
+        env:
+          HEAL_LLM: replay
+        run: npm run heal
+
+      - name: Upload reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-self-healing
+          path: |
+            reports/self-healing/
+            self-heal/out/
+          retention-days: 30
