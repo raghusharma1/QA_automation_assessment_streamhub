@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import { buildIplSeed, SEED_PATH } from '../../sql/scripts/build-ipl-seed';
+import { buildIplSeed, SEED_PATH, validateSeedData } from '../../sql/scripts/build-ipl-seed';
 import {
   freshDatabase,
   readSql,
@@ -44,6 +44,56 @@ test.describe('SQL scenario 2: IPL 30+ run streaks', () => {
     expect(readFileSync(SEED_PATH, 'utf8'), 'run `npm run sql:seed` to regenerate').toBe(
       buildIplSeed(),
     );
+  });
+
+  test('the seed generator rejects innings that the two streak definitions would disagree on', () => {
+    const players = [{ id: 1, name: 'P', teamId: 'X' }];
+    const match = (id: number, home: string, away: string) => ({
+      id,
+      season: 2024,
+      date: '2024-04-01',
+      stage: 'LEAGUE',
+      venue: 'V',
+      homeTeamId: home,
+      awayTeamId: away,
+      winnerTeamId: null,
+    });
+    const matches = [match(1, 'X', 'Y'), match(2, 'Q', 'Y')];
+    const bat = (matchId: number, playerId = 1) => ({
+      matchId,
+      playerId,
+      runs: 40,
+      balls: 30,
+      notOut: false,
+    });
+
+    expect(() => validateSeedData(players, matches, [], [bat(1)])).not.toThrow();
+    expect(() => validateSeedData(players, matches, [1], [bat(1)])).toThrow(/abandoned match 1/);
+    expect(() => validateSeedData(players, matches, [], [bat(2)])).toThrow(/X did not play/);
+    expect(() => validateSeedData(players, matches, [], [bat(9)])).toThrow(/unknown match 9/);
+    expect(() => validateSeedData(players, matches, [], [bat(1, 7)])).toThrow(/unknown player 7/);
+    expect(() => validateSeedData(players, matches, [99], [])).toThrow(/99 does not exist/);
+  });
+
+  test('the schema rejects inconsistent fixtures', async () => {
+    const db = await freshDatabase(DIR, '');
+    const insert = (values: string) =>
+      db.exec(
+        `INSERT INTO matches (match_id, season, match_date, stage, venue, home_team, away_team, winner_team, abandoned) VALUES ${values}`,
+      );
+    await insert(`(1, 2024, '2024-04-01', 'LEAGUE', 'V', 'X', 'Y', 'X', FALSE)`); // consistent: accepted
+    // the winner must be one of the two teams
+    await expect(
+      insert(`(2, 2024, '2024-04-01', 'LEAGUE', 'V', 'X', 'Y', 'Z', FALSE)`),
+    ).rejects.toThrow(/check constraint/);
+    // a washed-out match has no winner
+    await expect(
+      insert(`(3, 2024, '2024-04-01', 'LEAGUE', 'V', 'X', 'Y', 'X', TRUE)`),
+    ).rejects.toThrow(/check constraint/);
+    // the season is the year of the match date
+    await expect(
+      insert(`(4, 2024, '2023-04-01', 'LEAGUE', 'V', 'X', 'Y', NULL, FALSE)`),
+    ).rejects.toThrow(/check constraint/);
   });
 
   test('table schema', async ({ page }, testInfo) => {

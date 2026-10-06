@@ -14,7 +14,9 @@ INSERT INTO accounts (account_id, holder_name, opened_at) VALUES
 ('ACC011', 'Kavya Menon',  '2023-11-20 10:00:00'),
 ('ACC012', 'Lakshay Jain', '2023-12-21 10:00:00'),
 ('ACC013', 'Meera Pillai', '2024-01-05 10:00:00'),
-('ACC014', 'Nikhil Bose',  '2024-01-06 10:00:00');
+('ACC014', 'Nikhil Bose',  '2024-01-06 10:00:00'),
+('ACC015', 'Ojas Kulkarni', '2024-01-07 10:00:00'),
+('ACC016', 'Priya Das',    '2024-01-08 10:00:00');
 
 INSERT INTO transactions (txn_id, from_account, to_account, amount, created_at) VALUES
 -- E1  basic round trip, -5%, 6h30m                          -> match (1,2)
@@ -59,4 +61,7 @@ INSERT INTO transactions (txn_id, from_account, to_account, amount, created_at) 
 --     -> two overlapping pairs (27,28), (28,29); one-to-one keeps both (28 once per side)
 (27, 'ACC013', 'ACC014',  100.00, '2024-03-16 09:00:00'),
 (28, 'ACC014', 'ACC013',  100.00, '2024-03-16 10:00:00'),
-(29, 'ACC013', 'ACC014',  100.00, '2024-03-16 11:00:00');
+(29, 'ACC013', 'ACC014',  100.00, '2024-03-16 11:00:00'),
+-- E14 opposite transfers in the same second: neither is a reply to the other  -> no match
+(30, 'ACC015', 'ACC016',  100.00, '2024-03-17 09:00:00'),
+(31, 'ACC016', 'ACC015',  100.00, '2024-03-17 09:00:00');

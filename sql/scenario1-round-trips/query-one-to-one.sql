@@ -33,4 +33,4 @@ SELECT original_txn_id, return_txn_id, account_a, account_b,
        original_at, return_at
 FROM per_original
 WHERE rn_original = 1
-ORDER BY original_at;
+ORDER BY original_at, original_txn_id;

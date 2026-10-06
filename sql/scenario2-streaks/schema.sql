@@ -19,7 +19,12 @@ CREATE TABLE matches (
     away_team    VARCHAR(5)    NOT NULL,
     winner_team  VARCHAR(5),               -- NULL = no result
     abandoned    BOOLEAN       NOT NULL DEFAULT FALSE,  -- washed out with no play: not a match played
-    CHECK (home_team <> away_team)
+    CHECK (home_team <> away_team),
+    -- Inconsistent fixtures would make the two streak definitions disagree silently, so the
+    -- schema rejects them at load time.
+    CHECK (winner_team IS NULL OR winner_team IN (home_team, away_team)),
+    CHECK (NOT abandoned OR winner_team IS NULL),   -- a washed-out match has no winner
+    CHECK (season = EXTRACT(YEAR FROM match_date))  -- IPL seasons sit inside one calendar year
 );
 
 -- One row per player who actually BATTED in a match. "Did not bat" = no row.

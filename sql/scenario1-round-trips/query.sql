@@ -19,4 +19,4 @@ JOIN transactions r
   AND r.created_at   <= o.created_at + INTERVAL '24 hours'     -- at most exactly 24h later
 WHERE o.from_account <> o.to_account                           -- ignore self-transfers
   AND ABS(r.amount - o.amount) <= 0.10 * o.amount              -- within 10% of the original
-ORDER BY o.created_at, r.created_at;
+ORDER BY o.created_at, r.created_at, o.txn_id, r.txn_id;  -- txn ids: a total order

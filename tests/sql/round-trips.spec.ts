@@ -74,9 +74,9 @@ test.describe('SQL scenario 1: round-trip transfers', () => {
     ).toEqual(EXPECTED);
 
     // Excluded on purpose: 10.01% (5,6), 24h+1s (9,10), self-transfers (19,20),
-    // a three-party cycle (21-23) and a one-way transfer (26).
+    // a three-party cycle (21-23), a one-way transfer (26) and the same second (30,31).
     const used = new Set(rows.flatMap((r) => [r.original_txn_id, r.return_txn_id]));
-    for (const txn of [5, 6, 9, 10, 19, 20, 21, 22, 23, 26])
+    for (const txn of [5, 6, 9, 10, 19, 20, 21, 22, 23, 26, 30, 31])
       expect(used.has(txn), `txn ${txn}`).toBe(false);
   });
 
@@ -153,6 +153,13 @@ test.describe('SQL scenario 1: round-trip transfers', () => {
       from: 'AND r.to_account   = o.from_account',
       to: 'AND TRUE',
       expected: [...EXPECTED_PAIRS.slice(0, 8), [21, 22], [22, 23], ...EXPECTED_PAIRS.slice(8)],
+    },
+    {
+      // Without E14 this mutant survived: no seed row distinguished > from >=.
+      rule: 'the return is strictly after the original (same second is not a reply)',
+      from: 'AND r.created_at   >  o.created_at',
+      to: 'AND r.created_at   >= o.created_at',
+      expected: [...EXPECTED_PAIRS, [30, 31], [31, 30]],
     },
   ];
 

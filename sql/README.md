@@ -17,9 +17,11 @@ run `schema.sql`, then `seed.sql`, then a query. PostgreSQL 14 is the minimum be
 schema, seed and query with `psql` in the official `postgres:18` Docker image (a throwaway
 container that is removed afterwards). The transcripts, with the server's `version()` and the
 `\d` schema output, are in [results/psql/](results/psql). PostgreSQL 18.6 returned exactly the
-rows the tests expect.
+rows the tests expect. (That comparison is a manual check: the psql transcripts are regenerated
+by the script, not drift-tested like `results/*.txt`.)
 
-The table schemas are also captured as screenshots:
+The table schemas are also captured as screenshots (columns and types; the constraints and
+indexes are in the `\d` output of the psql transcripts, `results/psql/*--schema.txt`):
 [scenario 1](results/scenario1-schema.png) · [scenario 2](results/scenario2-schema.png).
 
 | Scenario                | Folder (schema, seed, queries)                  | Results: screenshot (raw text)                                                                                                                                                                                                                                                                           |
@@ -52,7 +54,18 @@ queries were run. They are never generated from the queries themselves.
 Money is `NUMERIC(14,2)` (exact decimal), so the 10% boundary is not subject to floating-point error.
 
 The one-to-one variant uses each transaction at most once **per side**: in a ping-pong
-A→B→A→B (E13) the middle transfer is the return of the first pair and the original of the second.
+A→B→A→B (E13) the middle transfer is the return of the first pair and the original of the second
+(so A→B→A→B→A gives three pairs from four transfers).
+
+It is a **greedy** rule, not an optimal matching: each return is first given to its nearest earlier
+original, then each original keeps its earliest return. That can leave a valid pair unmatched.
+With two originals (10:00, 11:00) followed by two returns (12:00, 13:00) between the same accounts,
+both returns pick the 11:00 original, so only one pair is reported and the 10:00 original is left
+out, where first-in-first-out pairing would report two. For alerting this under-counts; the main
+query, which lists every qualifying pair, is the one to use for investigation.
+
+Two opposite transfers in the **same second** are never paired (E14): the return must be strictly
+later, so neither can be a reply to the other.
 
 Timestamps are `TIMESTAMP` (without time zone), so "24 hours" means wall-clock time in one implied
 zone. A real ledger should store `timestamptz` (UTC), so the window is exact across zones and
@@ -60,21 +73,22 @@ daylight-saving changes.
 
 ### Edge cases in the seed (expected result worked out by hand)
 
-| Case                             | Txns       | Expected                                   |
-| -------------------------------- | ---------- | ------------------------------------------ |
-| E1 basic: −5%, 6h30m             | 1, 2       | match                                      |
-| E2 exactly +10.00%               | 3, 4       | match (inclusive)                          |
-| E3 +10.01%                       | 5, 6       | no match                                   |
-| E4 exactly 24h00m00s             | 7, 8       | match (inclusive)                          |
-| E5 24h00m01s                     | 9, 10      | no match                                   |
-| E6 B pays first, A pays back     | 11, 12     | match **once**, original = 11              |
-| E7 two originals, one return     | 13, 14, 15 | (13,15) and (14,15); one-to-one: (14,15)   |
-| E8 one original, two returns     | 16, 17, 18 | (16,17) and (16,18); one-to-one: (16,17)   |
-| E9 self-transfer twice           | 19, 20     | no match                                   |
-| E10 A→B→C→A cycle                | 21, 22, 23 | no match                                   |
-| E11 exactly −10.00%              | 24, 25     | match (inclusive)                          |
-| E12 one-way transfer             | 26         | no match                                   |
-| E13 ping-pong A→B→A→B within 24h | 27, 28, 29 | (27,28) and (28,29); one-to-one keeps both |
+| Case                               | Txns       | Expected                                   |
+| ---------------------------------- | ---------- | ------------------------------------------ |
+| E1 basic: −5%, 6h30m               | 1, 2       | match                                      |
+| E2 exactly +10.00%                 | 3, 4       | match (inclusive)                          |
+| E3 +10.01%                         | 5, 6       | no match                                   |
+| E4 exactly 24h00m00s               | 7, 8       | match (inclusive)                          |
+| E5 24h00m01s                       | 9, 10      | no match                                   |
+| E6 B pays first, A pays back       | 11, 12     | match **once**, original = 11              |
+| E7 two originals, one return       | 13, 14, 15 | (13,15) and (14,15); one-to-one: (14,15)   |
+| E8 one original, two returns       | 16, 17, 18 | (16,17) and (16,18); one-to-one: (16,17)   |
+| E9 self-transfer twice             | 19, 20     | no match                                   |
+| E10 A→B→C→A cycle                  | 21, 22, 23 | no match                                   |
+| E11 exactly −10.00%                | 24, 25     | match (inclusive)                          |
+| E12 one-way transfer               | 26         | no match                                   |
+| E13 ping-pong A→B→A→B within 24h   | 27, 28, 29 | (27,28) and (28,29); one-to-one keeps both |
+| E14 A→B and B→A in the same second | 30, 31     | no match (neither is a reply to the other) |
 
 ---
 

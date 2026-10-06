@@ -42,6 +42,37 @@ const readJson = <T>(...segments: string[]): T =>
 const text = (value: string) => `'${value.replace(/'/g, "''")}'`;
 const nullable = (value: string | null) => (value === null ? 'NULL' : text(value));
 
+/**
+ * Content checks the schema can't express: every innings must be in a match that was played and
+ * that the batter's team took part in. Otherwise the two streak definitions (appearances vs team
+ * fixtures) would disagree on bad data instead of failing loudly.
+ */
+export function validateSeedData(
+  players: Player[],
+  matches: Match[],
+  abandoned: number[],
+  innings: Innings[],
+): void {
+  const matchById = new Map(matches.map((m) => [m.id, m]));
+  const teamOf = new Map(players.map((p) => [p.id, p.teamId]));
+  const problems: string[] = [];
+  for (const id of abandoned)
+    if (!matchById.has(id)) problems.push(`abandoned match ${id} does not exist`);
+  for (const i of innings) {
+    const match = matchById.get(i.matchId);
+    const team = teamOf.get(i.playerId);
+    if (!match) problems.push(`innings for unknown match ${i.matchId}`);
+    else if (team === undefined) problems.push(`innings for unknown player ${i.playerId}`);
+    else if (abandoned.includes(i.matchId))
+      problems.push(`player ${i.playerId} batted in abandoned match ${i.matchId}`);
+    else if (team !== match.homeTeamId && team !== match.awayTeamId)
+      problems.push(
+        `player ${i.playerId} (${team}) batted in match ${i.matchId}, which ${team} did not play`,
+      );
+  }
+  if (problems.length > 0) throw new Error(`Invalid streak seed data:\n  ${problems.join('\n  ')}`);
+}
+
 export function buildIplSeed(): string {
   const players = readJson<Player[]>('api', 'data', 'players.json');
   const matches = readJson<Match[]>('api', 'data', 'matches.json');
@@ -51,6 +82,7 @@ export function buildIplSeed(): string {
     innings: Innings[];
   }>('sql', 'scenario2-streaks', 'innings.json');
   const allMatches = [...matches, ...extraMatches].sort((a, b) => a.id - b.id);
+  validateSeedData(players, allMatches, abandonedMatchIds, innings);
 
   const playerRows = players.map((p) => `(${p.id}, ${text(p.name)}, ${text(p.teamId)})`);
   const matchRows = allMatches.map(
