@@ -72,7 +72,9 @@ const report = JSON.parse(
 const found: { title: string; attachment: Attachment }[] = [];
 collect(report, found);
 
-mkdirSync(OUT, { recursive: true });
+// Collect everything first and write only if nothing is missing, so a failed run can't leave
+// docs/evidence/ with a mix of old and new images.
+const images: { file: string; bytes: Buffer }[] = [];
 const missing: string[] = [];
 for (const want of WANTED) {
   const hit = found.find(
@@ -83,14 +85,16 @@ for (const want of WANTED) {
     : hit?.path
       ? readFileSync(hit.path)
       : undefined;
-  if (!bytes) {
-    missing.push(`${want.scenario} / ${want.attachment}`);
-    continue;
-  }
-  writeFileSync(path.join(OUT, want.file), bytes);
-  console.log(`docs/evidence/${want.file}`);
+  if (bytes) images.push({ file: want.file, bytes });
+  else missing.push(`${want.scenario} / ${want.attachment}`);
 }
 if (missing.length > 0) {
-  console.error(`Missing from a passing ui result: ${missing.join(', ')}`);
+  console.error(`Missing from a passing ui result (nothing written): ${missing.join(', ')}`);
   process.exitCode = 1;
+} else {
+  mkdirSync(OUT, { recursive: true });
+  for (const { file, bytes } of images) {
+    writeFileSync(path.join(OUT, file), bytes);
+    console.log(`docs/evidence/${file}`);
+  }
 }

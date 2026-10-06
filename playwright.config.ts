@@ -2,7 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 import { cucumberReporter, defineBddProject } from 'playwright-bdd';
 import { env } from './src/config/env';
 
-const isCI = !!process.env.CI;
+const isCI = env.CI;
+// Deterministic projects (no external site) never retry: a test that only passes on retry is a
+// bug there, and a retry would hide it behind a green run. Only the live-site ui project retries.
+const NO_RETRIES = { retries: 0 };
 
 export default defineConfig({
   // Per-test artifacts (screenshots, traces, videos). Kept outside the HTML report folder,
@@ -48,12 +51,14 @@ export default defineConfig({
       // Plain Playwright tests (no browser) for the framework's own logic, e.g. the EMI oracle.
       name: 'unit',
       testDir: 'tests/unit',
+      ...NO_RETRIES,
     },
     {
       // SQL scenarios (Section B4) on PGlite: expected rows + mutation checks. A browser is
       // used only to render the result tables as screenshots.
       name: 'sql',
       testDir: 'tests/sql',
+      ...NO_RETRIES,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1100, height: 700 } },
     },
     {
@@ -77,6 +82,7 @@ export default defineConfig({
         features: 'features/api/**/*.feature',
         steps: ['src/steps/api/**/*.ts', 'src/fixtures/**/*.ts'],
       }),
+      ...NO_RETRIES,
       use: {
         // Trailing slash so relative request paths resolve under any path prefix in the URL.
         baseURL: `${env.API_BASE_URL.replace(/\/$/, '')}/`,
@@ -87,14 +93,17 @@ export default defineConfig({
 
   // Starts the API before tests and stops it afterwards. Locally, an API you already started
   // with `npm run api:dev` is reused. It starts for every run (well under a second), so nobody
-  // has to remember to start it before the API tests.
-  webServer: {
-    command: 'npm run api:start',
-    url: `${env.API_BASE_URL.replace(/\/$/, '')}/health`,
-    env: { API_PORT: String(env.API_PORT) },
-    reuseExistingServer: !isCI,
-    timeout: 30_000,
-    stdout: 'ignore',
-    stderr: 'pipe',
-  },
+  // has to remember to start it before the API tests. With API_BASE_URL set to an API that
+  // runs elsewhere (e.g. a deployed one), nothing is started.
+  webServer: env.API_IS_EXTERNAL
+    ? undefined
+    : {
+        command: 'npm run api:start',
+        url: `${env.API_BASE_URL.replace(/\/$/, '')}/health`,
+        env: { API_PORT: String(env.API_PORT) },
+        reuseExistingServer: !isCI,
+        timeout: 30_000,
+        stdout: 'ignore',
+        stderr: 'pipe',
+      },
 });

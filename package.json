@@ -10,7 +10,7 @@
     "api:start": "tsx api/src/server.ts",
     "api:dev": "tsx watch api/src/server.ts",
     "sql:seed": "tsx sql/scripts/build-ipl-seed.ts",
-    "sql:evidence": "cross-env SQL_EVIDENCE=true playwright test --project=sql",
+    "sql:evidence": "cross-env SQL_EVIDENCE=true playwright test --project=sql --reporter=list",
     "evidence:images": "tsx scripts/extract-evidence-images.ts",
     "bddgen": "bddgen",
     "test": "bddgen && playwright test --project=unit --project=sql --project=api --project=ui",
