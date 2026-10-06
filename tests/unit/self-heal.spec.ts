@@ -446,6 +446,32 @@ test.describe('self-heal: hardening from the pre-run review', () => {
     expect(groundingGate(id('amount'), evidence).passed).toBe(false);
   });
 
+  test('a scrubbed report (<repo> instead of the local path) is still readable', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'heal-report-'));
+    const report = path.join(dir, 'results.json');
+    const attachment = {
+      name: 'error-context',
+      path: '<repo>/tests/unit/fixtures/error-context-action-failure.md',
+    };
+    const result = {
+      status: 'failed',
+      error: { message: MESSAGES.timeout },
+      attachments: [attachment],
+    };
+    writeFileSync(
+      report,
+      JSON.stringify({
+        suites: [{ specs: [{ title: 'Broken 2', tests: [{ results: [result] }] }] }],
+      }),
+    );
+    try {
+      const [failure] = readFailures(report);
+      expect(failure?.snapshot).toContain('textbox');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test('a failure without any error-context attachment also stops the run', () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'heal-report-'));
     const report = path.join(dir, 'results.json');

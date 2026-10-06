@@ -4,6 +4,9 @@
  * sent to a model.
  */
 import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+
+const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
 export type FailureKind =
   'strict-mode-violation' | 'element-not-found' | 'not-actionable' | 'assertion-mismatch' | 'other';
@@ -104,7 +107,10 @@ export function readFailures(reportPath: string): Failure[] {
       for (const test of spec.tests) {
         const result = test.results.at(-1);
         if (!result || result.status === 'passed' || result.status === 'skipped') continue;
-        const contextPath = result.attachments.find((a) => a.name === 'error-context')?.path;
+        // Committed reports have the repository root replaced by "<repo>" (evidence:scrub).
+        const contextPath = result.attachments
+          .find((a) => a.name === 'error-context')
+          ?.path?.replace(/^<repo>/, REPO_ROOT);
         // The report references the error context by absolute path, and test-results/ is not
         // committed. A missing file must stop the run: silently sending "(not available)" makes
         // the model blind, which is exactly the bug the first live run had.

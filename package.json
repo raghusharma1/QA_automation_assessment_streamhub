@@ -12,6 +12,7 @@
     "sql:seed": "tsx sql/scripts/build-ipl-seed.ts",
     "sql:evidence": "cross-env SQL_EVIDENCE=true playwright test --project=sql --reporter=list",
     "evidence:images": "tsx scripts/extract-evidence-images.ts",
+    "evidence:scrub": "tsx scripts/scrub-report-paths.ts",
     "bddgen": "bddgen",
     "test": "bddgen && playwright test --project=unit --project=sql --project=api --project=ui",
     "test:ui": "bddgen && playwright test --project=ui",

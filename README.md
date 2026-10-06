@@ -17,7 +17,7 @@ doesn't render them) and are also uploaded as artifacts by every CI run.
 
 | Suite                                          | Result                                   | Evidence                                                                                                                                                |
 | ---------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `unit`: EMI and amortization oracles, healer   | ✅ 47 / 47                               | [Playwright HTML](reports/playwright-html/index.html) · [JSON](reports/playwright-results.json)                                                         |
+| `unit`: EMI and amortization oracles, healer   | ✅ 50 / 50                               | [Playwright HTML](reports/playwright-html/index.html) · [JSON](reports/playwright-results.json)                                                         |
 | `sql`: B4, both scenarios + 14 mutation checks | ✅ 24 / 24                               | [screenshots + raw output](sql/results) · [real `psql` transcripts](sql/results/psql)                                                                   |
 | `api`: B2 against our B1 API                   | ✅ 100 / 100                             | [Cucumber HTML](reports/cucumber/index.html) · [JUnit](reports/cucumber/report.xml) · [coverage matrix](api/README.md#status-code-and-parameter-matrix) |
 | `ui`: B3 TC1 + TC2 on the live site            | ✅ 5 / 5                                 | [Cucumber HTML](reports/cucumber/index.html) · [screenshots below](#evidence)                                                                           |
@@ -47,6 +47,7 @@ no API key or `.env` file is needed. Other commands:
 | `npm run test:broken`                                     | the deliberately broken self-healing suite (fails on purpose; separate config and reports)                                              |
 | `npm run heal`                                            | the AI healer on those failures; run `test:broken` first on the same machine (replays recorded model responses; no login or key needed) |
 | `npm run lint:locators`                                   | static brittle-locator lint                                                                                                             |
+| `npm run evidence:scrub`                                  | replace local absolute paths in `reports/` with `<repo>` before committing them                                                         |
 | `npm run check`                                           | `tsc`, type-aware ESLint, Prettier                                                                                                      |
 | `npm run api:start`                                       | the API on <http://localhost:3000>                                                                                                      |
 | `npm run report`                                          | open the last Playwright HTML report                                                                                                    |
