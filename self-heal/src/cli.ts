@@ -14,7 +14,7 @@ import path from 'node:path';
 import { HealResponseSchema, toCode, type Candidate } from './candidates';
 import { classify, readFailures, type Classification } from './failures';
 import { askModel } from './llm';
-import { unifiedDiff } from './patch';
+import { RestoreError, unifiedDiff } from './patch';
 import { buildFeedbackPrompt, buildPrompt } from './prompt';
 import { resolveTarget, type Target } from './targets';
 import {
@@ -111,71 +111,73 @@ async function main() {
       let prompt = basePrompt;
       // Bounded repair loop: if no candidate survives validation, the gate results go back to the
       // model ONCE. More rounds would just spend tokens guessing.
-      for (let round = 1; round <= MAX_ROUNDS && !outcome.proposal; round++) {
-        const key = round === 1 ? target.member : `${target.member}--round-${round}`;
-        // One failed call (timeout, rate limit, unparsable reply) costs this failure only: the
-        // proposals already validated for the others still reach the report.
-        let answer: Awaited<ReturnType<typeof askModel>>;
-        try {
-          answer = await askModel(key, prompt, { record });
-        } catch (error) {
-          outcome.note = `Model call failed in round ${round}: ${error instanceof Error ? error.message : String(error)}. Needs a human.`;
-          console.log(`  ${outcome.note}`);
-          break;
-        }
-        outcome.models.push(
-          `round ${round}: ${answer.adapter}, ${answer.model}${answer.promptChanged ? ' (prompt changed since recording)' : ''}`,
-        );
-        const parsed = HealResponseSchema.safeParse(answer.raw);
-        if (!parsed.success) {
-          outcome.note = `Model output rejected by the schema gate: ${parsed.error.issues[0]?.message ?? 'invalid'}.`;
-          break;
-        }
-
-        // A queue, because the specificity gate can add the exact variant of a candidate.
-        const queue: { candidate: Candidate; autoExact?: boolean }[] = parsed.data.candidates.map(
-          (candidate) => ({ candidate }),
-        );
-        for (let next = queue.shift(); next; next = queue.shift()) {
-          const { candidate } = next;
-          const code = toCode(candidate);
-          const gates = await checkOnLivePage(browser, candidate, target, asserted, evidence);
-          const exact = exactVariant(candidate);
-          if (exact && gates.some((g) => g.gate === 'specific' && !g.passed)) {
-            queue.unshift({ candidate: exact, autoExact: true });
-          }
-          const live = gates.every((g) => g.passed);
-          const result: CandidateOutcome = {
-            round,
-            candidate,
-            code,
-            gates,
-            accepted: false,
-            autoExact: next.autoExact,
-          };
-          if (live && !outcome.proposal) {
-            console.log(`  re-running "${failure.title}" ×3 with ${code}`);
-            const rerun = rerunWithCandidate(target, code, failure.title);
-            gates.push(rerun);
-            result.accepted = rerun.passed;
-            if (rerun.passed) outcome.proposal = result;
-          } else if (live) {
-            gates.push({
-              gate: 'rerun',
-              passed: false,
-              skipped: true,
-              detail: 'not run: a higher-ranked candidate was already accepted',
-            });
-          }
-          outcome.candidates.push(result);
-          const summary = gates
-            .map((g) => `${g.gate}:${g.skipped ? 'skipped' : g.passed ? 'ok' : 'FAIL'}`)
-            .join(' ');
-          console.log(
-            `  [round ${round}] ${result.accepted ? '✅' : g0(gates)} ${code}  ${summary}`,
+      // An error anywhere in healing this failure (model call, live page, re-run) costs this
+      // failure only: it is reported as "needs a human" and the proposals already validated for
+      // the others still reach the report. A page object that could not be restored is the one
+      // exception: that stops the run.
+      let round = 1;
+      try {
+        for (; round <= MAX_ROUNDS && !outcome.proposal; round++) {
+          const key = round === 1 ? target.member : `${target.member}--round-${round}`;
+          const answer = await askModel(key, prompt, { record });
+          outcome.models.push(
+            `round ${round}: ${answer.adapter}, ${answer.model}${answer.promptChanged ? ' (prompt changed since recording)' : ''}`,
           );
+          const parsed = HealResponseSchema.safeParse(answer.raw);
+          if (!parsed.success) {
+            outcome.note = `Model output rejected by the schema gate: ${parsed.error.issues[0]?.message ?? 'invalid'}.`;
+            break;
+          }
+
+          // A queue, because the specificity gate can add the exact variant of a candidate.
+          const queue: { candidate: Candidate; autoExact?: boolean }[] = parsed.data.candidates.map(
+            (candidate) => ({ candidate }),
+          );
+          for (let next = queue.shift(); next; next = queue.shift()) {
+            const { candidate } = next;
+            const code = toCode(candidate);
+            const gates = await checkOnLivePage(browser, candidate, target, asserted, evidence);
+            const exact = exactVariant(candidate);
+            if (exact && gates.some((g) => g.gate === 'specific' && !g.passed)) {
+              queue.unshift({ candidate: exact, autoExact: true });
+            }
+            const live = gates.every((g) => g.passed);
+            const result: CandidateOutcome = {
+              round,
+              candidate,
+              code,
+              gates,
+              accepted: false,
+              autoExact: next.autoExact,
+            };
+            if (live && !outcome.proposal) {
+              console.log(`  re-running "${failure.title}" ×3 with ${code}`);
+              const rerun = rerunWithCandidate(target, code, failure.title);
+              gates.push(rerun);
+              result.accepted = rerun.passed;
+              if (rerun.passed) outcome.proposal = result;
+            } else if (live) {
+              gates.push({
+                gate: 'rerun',
+                passed: false,
+                skipped: true,
+                detail: 'not run: a higher-ranked candidate was already accepted',
+              });
+            }
+            outcome.candidates.push(result);
+            const summary = gates
+              .map((g) => `${g.gate}:${g.skipped ? 'skipped' : g.passed ? 'ok' : 'FAIL'}`)
+              .join(' ');
+            console.log(
+              `  [round ${round}] ${result.accepted ? '✅' : g0(gates)} ${code}  ${summary}`,
+            );
+          }
+          if (!outcome.proposal) prompt = buildFeedbackPrompt(basePrompt, outcome.candidates);
         }
-        if (!outcome.proposal) prompt = buildFeedbackPrompt(basePrompt, outcome.candidates);
+      } catch (error) {
+        if (error instanceof RestoreError) throw error;
+        outcome.note = `Healing stopped in round ${round}: ${error instanceof Error ? error.message : String(error)}. Needs a human.`;
+        console.log(`  ${outcome.note}`);
       }
       if (!outcome.proposal && !outcome.note) {
         outcome.note = `No candidate passed every gate after ${MAX_ROUNDS} rounds: needs a human.`;
@@ -263,10 +265,16 @@ async function writeReport(outcomes: FailureOutcome[]) {
     lines.push('');
   }
   writeFileSync(path.join(OUT, 'healing-report.md'), lines.join('\n'), 'utf8');
-  console.log(`\nWrote self-heal/out/healing-report.md (${healed} proposed, ${refused} refused)`);
+  const needsHuman = outcomes.length - healed - refused;
+  console.log(
+    `\nWrote self-heal/out/healing-report.md (${healed} proposed, ${refused} refused, ${needsHuman} needs a human)`,
+  );
 }
 
 main().catch((error: unknown) => {
-  console.error(error);
+  // Expected stops (no report yet, missing snapshots, dirty page objects) read best as a plain
+  // message; anything else keeps its stack trace for debugging.
+  const expected = error instanceof Error && /test:broken|uncommitted changes/.test(error.message);
+  console.error(expected ? `heal: ${error.message}` : error);
   process.exitCode = 1;
 });

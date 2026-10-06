@@ -4,7 +4,6 @@
  * a patch, so a "heal" can't weaken a test.
  */
 import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -12,7 +11,6 @@ import * as prettier from 'prettier';
 import type { Target } from './targets';
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 
 export function patchedSource(source: string, target: Target, newExpression: string): string {
   const occurrences = source.split(target.expression).length - 1;
@@ -26,17 +24,20 @@ export function patchedSource(source: string, target: Target, newExpression: str
   return source.replace(target.expression, () => newExpression);
 }
 
+/** A page object could not be put back: the run must stop, never carry on past this. */
+export class RestoreError extends Error {}
+
 /** Applies the patch for the duration of `fn` and always restores the original, verified. */
 export function withPatch<T>(target: Target, newExpression: string, fn: () => T): T {
   const file = path.join(ROOT, target.file);
-  const original = readFileSync(file, 'utf8');
+  const original = readFileSync(file); // raw bytes, so the check below is byte-for-byte
   const restore = () => {
-    writeFileSync(file, original, 'utf8');
-    if (sha(readFileSync(file, 'utf8')) !== sha(original)) {
-      throw new Error(`failed to restore ${target.file} after a validation run`);
+    writeFileSync(file, original);
+    if (!readFileSync(file).equals(original)) {
+      throw new RestoreError(`failed to restore ${target.file} after a validation run`);
     }
   };
-  writeFileSync(file, patchedSource(original, target, newExpression), 'utf8');
+  writeFileSync(file, patchedSource(original.toString('utf8'), target, newExpression), 'utf8');
   let result: T;
   try {
     result = fn();

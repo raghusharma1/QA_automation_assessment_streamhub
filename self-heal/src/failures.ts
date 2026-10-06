@@ -108,9 +108,10 @@ export function readFailures(reportPath: string): Failure[] {
         // The report references the error context by absolute path, and test-results/ is not
         // committed. A missing file must stop the run: silently sending "(not available)" makes
         // the model blind, which is exactly the bug the first live run had.
-        if (contextPath && !existsSync(contextPath)) {
+        // Playwright attaches one to every failure; none at all means a different reporter setup.
+        if (!contextPath || !existsSync(contextPath)) {
           throw new Error(
-            `The page snapshot for "${spec.title}" is missing (${contextPath}).\n` +
+            `The page snapshot for "${spec.title}" is missing (${contextPath ?? 'no error-context attachment'}).\n` +
               'Run `npm run test:broken` on this machine first: the healer needs the ' +
               'error-context.md files that run writes next to its report.',
           );
@@ -119,7 +120,7 @@ export function readFailures(reportPath: string): Failure[] {
           title: spec.title,
           message: stripAnsi(result.error?.message ?? ''),
           location: result.error?.location,
-          snapshot: contextPath ? extractSnapshot(readFileSync(contextPath, 'utf8')) : '',
+          snapshot: extractSnapshot(readFileSync(contextPath, 'utf8')),
         });
       }
     }

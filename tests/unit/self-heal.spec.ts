@@ -435,4 +435,31 @@ test.describe('self-heal: hardening from the pre-run review', () => {
       'Error: expect(locator).toBeVisible() failed\nExpected: visible\nReceived: hidden';
     expect(assertedValues(message)).toEqual([]);
   });
+
+  test('grounding matches whole tokens, not fragments of longer words', () => {
+    // "emi" occurs only inside longer words here (emicalculator, emiamount).
+    const evidence = '- link "emicalculator.net" [ref=e3]\npage.locator(\'#emiamount p\')';
+    const id = (value: string) =>
+      CandidateSchema.parse({ strategy: 'scopedId', id: value, rationale: 'r' });
+    expect(groundingGate(id('emiamount'), evidence).passed).toBe(true); // "#emiamount"
+    expect(groundingGate(id('emi'), evidence).passed).toBe(false); // only inside longer words
+    expect(groundingGate(id('amount'), evidence).passed).toBe(false);
+  });
+
+  test('a failure without any error-context attachment also stops the run', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'heal-report-'));
+    const report = path.join(dir, 'results.json');
+    const result = { status: 'failed', error: { message: MESSAGES.timeout }, attachments: [] };
+    writeFileSync(
+      report,
+      JSON.stringify({
+        suites: [{ specs: [{ title: 'Broken 2', tests: [{ results: [result] }] }] }],
+      }),
+    );
+    try {
+      expect(() => readFailures(report)).toThrow(/no error-context attachment/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });

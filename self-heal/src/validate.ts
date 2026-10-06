@@ -124,7 +124,13 @@ export function groundingGate(candidate: Candidate, evidence: string): GateResul
       : candidate.strategy === 'testId'
         ? [candidate.testId]
         : [identifyingText(candidate)];
-  const missing = needles.find((n) => !haystack.includes(n.toLowerCase()));
+  // Whole tokens only: a short id like "emi" must not count as grounded because "emicalculator"
+  // happens to be in the evidence. Identifier characters may not touch either end of the match.
+  const asToken = (n: string) =>
+    new RegExp(
+      `(^|[^a-z0-9_-])${n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^a-z0-9_-])`,
+    );
+  const missing = needles.find((n) => !asToken(n).test(haystack));
   return missing
     ? {
         gate: 'grounded',
