@@ -1,6 +1,6 @@
 import type { APIRequestContext, TestInfo } from '@playwright/test';
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 /** A captured response: everything later steps need, read once. */
 export interface ApiResult {

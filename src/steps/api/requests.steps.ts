@@ -2,7 +2,7 @@ import type { DataTable } from 'playwright-bdd';
 import type { HttpMethod } from '../../api-clients/ApiClient';
 import { When } from '../../fixtures';
 
-const METHODS: readonly HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+const METHODS: readonly HttpMethod[] = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
 function toMethod(value: string): HttpMethod {
   const method = METHODS.find((m) => m === value);
@@ -18,6 +18,14 @@ const params = (table: DataTable): Record<string, string> => table.rowsHash();
 When('I send a {word} request to {string}', async ({ api, ctx }, method: string, path: string) => {
   ctx.response = await api.client.send(toMethod(method), path);
 });
+
+// A number too long to write in a table: 400 nines parse to Infinity in JavaScript.
+When(
+  'I send a GET request to {string} with {string} set to a {int}-digit number',
+  async ({ api, ctx }, path: string, param: string, digits: number) => {
+    ctx.response = await api.client.send('GET', `${path}?${param}=${'9'.repeat(digits)}`);
+  },
+);
 
 When('I request the teams list', async ({ api, ctx }) => {
   ctx.response = await api.teams();

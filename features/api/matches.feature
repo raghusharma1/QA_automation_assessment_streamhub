@@ -8,7 +8,7 @@ Feature: Matches endpoint
     When I request the matches list
     Then the response status is 400
     And the response is a problem document with title "Bad Request"
-    And the problem lists an error for "season" with code "missing" and message "season is required"
+    And the problem lists only an error for "season" with code "missing" and message "season is required"
 
   Scenario: All matches of a season
     When I request the matches list with:
@@ -35,8 +35,10 @@ Feature: Matches endpoint
     Then the response status is 200
     And the response matches the "match list" contract
     And the page metadata reports <total> results in total
+    And the response contains <total> items
     And every match satisfies <param> "<value>"
 
+    # The from/to values fall exactly on a match date (05-01, 03-30), so an exclusive bound fails.
     # title-format: season=2024 & <param>=<value> returns <total> matches
     Examples:
       | param | value      | total |
@@ -44,19 +46,21 @@ Feature: Matches endpoint
       | stage | LEAGUE     | 20    |
       | stage | FINAL      | 1     |
       | from  | 2024-05-01 | 9     |
-      | to    | 2024-03-31 | 7     |
+      | to    | 2024-03-30 | 7     |
 
-  Scenario: Paging through a season in date order
+  # Descending on purpose: api/data/matches.json is stored in date order, so an API that ignored
+  # sort=date would still pass an ascending check.
+  Scenario: Paging through a season in reverse date order
     When I request the matches list with:
-      | season | 2024 |
-      | sort   | date |
-      | page   | 2    |
-      | limit  | 5    |
+      | season | 2024  |
+      | sort   | -date |
+      | page   | 2     |
+      | limit  | 5     |
     Then the response status is 200
     And the response matches the "match list" contract
     And the page metadata is page 2 of 5 with limit 5 and 24 results in total
-    And the item ids are, in order: "6, 7, 8, 9, 10"
-    And the items are ordered by "date" ascending
+    And the item ids are, in order: "19, 18, 17, 16, 15"
+    And the items are ordered by "date" descending
 
   Scenario: Sort by id, descending
     When I request the matches list with:
@@ -66,23 +70,24 @@ Feature: Matches endpoint
     Then the response status is 200
     And the item ids are, in order: "24, 23, 22"
 
+  # to=2024-05-21 is KKR's match 21: inclusive keeps it, and it drops match 24 (05-26).
   Scenario: Date window, team and sort combined
     When I request the matches list with:
       | season | 2024       |
       | team   | KKR        |
       | from   | 2024-05-01 |
-      | to     | 2024-05-31 |
+      | to     | 2024-05-21 |
       | sort   | -date      |
     Then the response status is 200
     And the response matches the "match list" contract
-    And the item ids are, in order: "24, 21, 19, 17"
+    And the item ids are, in order: "21, 19, 17"
     And the items are ordered by "date" descending
 
   Scenario Outline: Invalid match queries are rejected: <query>
     When I send a GET request to "api/matches?<query>"
     Then the response status is 400
     And the response is a problem document with title "Bad Request"
-    And the problem lists an error for "<param>" with code "<code>" and message "<message>"
+    And the problem lists only an error for "<param>" with code "<code>" and message "<message>"
 
     # title-format: GET api/matches?<query> -> 400 (<param> <code>)
     Examples:
@@ -97,6 +102,9 @@ Feature: Matches endpoint
       | season=2024&to=26-05-2024                 | to     | invalid           | to must be a date in YYYY-MM-DD format                                          |
       | season=2024&sort=venue                    | sort   | invalid           | sort must be a comma-separated list of: date, id (prefix with - for descending) |
       | season=2024&year=2024                     | year   | unknown_parameter | year is not a supported parameter                                               |
+      | season=2024&team=XYZ                      | team   | invalid           | team must be one of: CSK, DC, GT, KKR, LSG, MI, PBKS, RR, RCB, SRH              |
+      | season=2024&limit=0                       | limit  | invalid           | limit must be an integer between 1 and 100                                      |
+      | season=2024&page=0                        | page   | invalid           | page must be an integer between 1 and 10000                                     |
 
   Scenario: A malformed date gets one error, not follow-on calendar and range errors
     When I send a GET request to "api/matches?season=2024&from=bad&to=2024-04-01"
@@ -104,4 +112,4 @@ Feature: Matches endpoint
     And the problem lists exactly these errors:
       | param | code    |
       | from  | invalid |
-    And the problem lists an error for "from" with code "invalid" and message "from must be a date in YYYY-MM-DD format"
+    And the problem lists only an error for "from" with code "invalid" and message "from must be a date in YYYY-MM-DD format"

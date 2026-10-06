@@ -108,6 +108,16 @@ Then('the response field {string} is {string}', ({ ctx }, field: string, value: 
   expect(String(body[field])).toBe(value);
 });
 
+// Exact body, hand-written in the feature file (a DocString), so a wrong record with the right
+// name, or a coerced field type, fails.
+Then('the response body is exactly:', ({ ctx }, expected: string) => {
+  expect(requireResponse(ctx).body).toEqual(JSON.parse(expected));
+});
+
+Then('the response body is empty', ({ ctx }) => {
+  expect(requireResponse(ctx).body).toBe('');
+});
+
 // ---------- lists, pagination, ordering ----------
 
 Then('the response contains {int} items', ({ ctx }, count: number) => {
@@ -206,10 +216,11 @@ Then(
 );
 
 Then(
-  'the problem lists an error for {string} with code {string} and message {string}',
+  'the problem lists only an error for {string} with code {string} and message {string}',
   ({ ctx }, param: string, code: string, message: string) => {
+    // Exactly this one error: an extra, spurious error (e.g. a follow-on range error) must fail.
     const { errors = [] } = problemOf(requireResponse(ctx));
-    expect(errors).toContainEqual({ param, code, message });
+    expect(errors).toEqual([{ param, code, message }]);
   },
 );
 

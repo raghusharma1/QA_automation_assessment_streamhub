@@ -28,11 +28,15 @@ export const MAX_LIMIT = 100;
 
 const intParam = (name: string, min: number, max: number) => {
   const message = `${name} must be an integer between ${min} and ${max}`;
-  return z
-    .string({ error: message })
-    .regex(/^\d+$/, message)
-    .transform(Number)
-    .pipe(z.number().int().min(min, message).max(max, message));
+  return (
+    z
+      .string({ error: message })
+      .regex(/^\d+$/, message)
+      .transform(Number)
+      // { error } here too: a 310+ digit string becomes Infinity, which would otherwise get
+      // zod's default wording ("expected number, received Infinity").
+      .pipe(z.number({ error: message }).int(message).min(min, message).max(max, message))
+  );
 };
 
 const enumParam = <T extends readonly [string, ...string[]]>(name: string, values: T) =>
@@ -120,7 +124,10 @@ export const NoQuery = z.strictObject({});
 export const IdParam = z.object({
   id: z
     .string()
-    .regex(/^[1-9]\d{0,8}$/, 'id must be a positive integer')
+    .regex(
+      /^[1-9]\d{0,8}$/,
+      'id must be a positive integer of at most 9 digits, without leading zeros',
+    )
     .transform(Number),
 });
 

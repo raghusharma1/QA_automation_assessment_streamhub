@@ -32,7 +32,7 @@ export const PlayerContract = z.strictObject({
 
 export const MatchContract = z.strictObject({
   id: z.number().int().positive(),
-  season: z.number().int(),
+  season: z.number().int().min(2008).max(2024), // first IPL season .. latest served (README)
   date: z.iso.date(),
   stage: z.enum(['LEAGUE', 'QUALIFIER_1', 'ELIMINATOR', 'QUALIFIER_2', 'FINAL']),
   venue: z.string().min(1),
@@ -59,7 +59,7 @@ const paged = <T extends z.ZodType>(item: T) =>
     .refine((p) => p.data.length <= p.meta.limit, { message: 'page holds more than limit items' });
 
 export const ProblemContract = z.strictObject({
-  type: z.string().min(1),
+  type: z.literal('about:blank'), // no problem types beyond the HTTP status are defined
   title: z.string().min(1),
   status: z.number().int().min(400).max(599),
   detail: z.string().min(1),
@@ -89,5 +89,4 @@ export const CONTRACTS = {
 export type ContractName = keyof typeof CONTRACTS;
 export type PlayerT = z.infer<typeof PlayerContract>;
 export type MatchT = z.infer<typeof MatchContract>;
-export type TeamT = z.infer<typeof TeamContract>;
 export type ProblemT = z.infer<typeof ProblemContract>;

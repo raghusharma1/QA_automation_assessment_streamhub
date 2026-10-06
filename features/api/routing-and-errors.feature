@@ -40,3 +40,14 @@ Feature: Health, routing and method handling
       | DELETE | api/players/1 |
       | PATCH  | api/teams     |
       | POST   | api/matches   |
+      | POST   | health        |
+
+  Scenario: HEAD is served for every GET route, without a body
+    When I send a HEAD request to "api/players"
+    Then the response status is 200
+    And the response body is empty
+
+  Scenario: HEAD still validates the query
+    When I send a HEAD request to "api/players?foo=1"
+    Then the response status is 400
+    And the response body is empty
