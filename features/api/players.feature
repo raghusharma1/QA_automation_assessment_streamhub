@@ -143,6 +143,14 @@ Feature: Players endpoint
       | foo=1                   | foo     | unknown_parameter | foo is not a supported parameter                                                                                |
       | tem=MI                  | tem     | unknown_parameter | tem is not a supported parameter                                                                                |
 
+  Scenario: An invalid run bound gets one error, not a follow-on range error
+    When I send a GET request to "api/players?minRuns=abc&maxRuns=1"
+    Then the response status is 400
+    And the problem lists exactly these errors:
+      | param   | code    |
+      | minRuns | invalid |
+    And the problem lists an error for "minRuns" with code "invalid" and message "minRuns must be an integer between 0 and 100000"
+
   Scenario: Every invalid parameter is reported at once
     When I send a GET request to "api/players?limit=0&team=XYZ&foo=1"
     Then the response status is 400

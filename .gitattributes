@@ -1,0 +1,8 @@
+# Normalise line endings to LF in the repository and in every checkout. The SQL evidence check
+# compares sql/results/*.txt byte for byte, so a CRLF checkout (Git for Windows' default
+# core.autocrlf=true) would otherwise fail `npm test`.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.zip binary

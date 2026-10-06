@@ -205,7 +205,7 @@ summaries, local paths removed): [`self-heal/comparison/`](self-heal/comparison)
 | Broken 4    | ✅ `locator('#emiamount p')`                                                        | ✅ same: _"same id the working page object already uses"_ | 🙋 needs a human (ungrounded)                                     |
 | Control     | ⚠️ tagged the scenario **`@fixme`** (a failing test silently becomes a skipped one) | ✅ left red, unchanged                                    | 🛑 refused before any model call                                  |
 | Other edits | hand-edited a **generated** BDD spec; stalled asking to run `npx bddgen`            | page object only                                          | none: proposals only                                              |
-| Cost        | 23 turns, 6.4 min, $1.93                                                            | 33 turns, 8.1 min, $1.78                                  | 7 schema-constrained model calls                                  |
+| Cost        | 23 turns, 6.4 min, $1.93                                                            | 33 turns, 8.1 min, $1.78                                  | 6 schema-constrained model calls                                  |
 
 **Caveats, stated plainly:**
 

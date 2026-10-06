@@ -218,6 +218,16 @@ test.describe('self-heal: patches only touch the locator expression', () => {
     const twice = "page.locator('#loan-amount'); page.locator('#loan-amount');";
     expect(() => patchedSource(twice, target, 'x')).toThrow(/exactly once/);
   });
+
+  test('$-patterns in model text are inserted literally, not expanded', () => {
+    const source =
+      "this.loanAmountInput = page.locator('#loan-amount').describe('Home loan amount input');";
+    // With a replacement *string*, $` would splice in the source before the match and $& the match.
+    const name = "page.getByRole('button', { name: 'a$`b$&c$'d', exact: true })";
+    expect(patchedSource(source, target, name)).toBe(
+      `this.loanAmountInput = ${name}.describe('Home loan amount input');`,
+    );
+  });
 });
 
 test.describe('self-heal: patches are standard, applicable diffs', () => {

@@ -97,3 +97,11 @@ Feature: Matches endpoint
       | season=2024&to=26-05-2024                 | to     | invalid           | to must be a date in YYYY-MM-DD format                                          |
       | season=2024&sort=venue                    | sort   | invalid           | sort must be a comma-separated list of: date, id (prefix with - for descending) |
       | season=2024&year=2024                     | year   | unknown_parameter | year is not a supported parameter                                               |
+
+  Scenario: A malformed date gets one error, not follow-on calendar and range errors
+    When I send a GET request to "api/matches?season=2024&from=bad&to=2024-04-01"
+    Then the response status is 400
+    And the problem lists exactly these errors:
+      | param | code    |
+      | from  | invalid |
+    And the problem lists an error for "from" with code "invalid" and message "from must be a date in YYYY-MM-DD format"

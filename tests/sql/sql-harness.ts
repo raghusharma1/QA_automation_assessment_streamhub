@@ -88,10 +88,6 @@ async function screenshotResult(
   return page.screenshot({ fullPage: true });
 }
 
-/**
- * Attaches the result (text table + PNG) to the Playwright/Cucumber reports, and with
- * SQL_EVIDENCE=true (npm run sql:evidence) also writes them to sql/results/ for the repository.
- */
 /** e.g. "PostgreSQL 18.3" (the full version() string, trimmed to the product and version). */
 export async function serverVersion(db: PGlite): Promise<string> {
   const { rows } = await db.query<{ version: string }>('SELECT version()');

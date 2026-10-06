@@ -38,14 +38,16 @@ const intParam = (name: string, min: number, max: number) => {
 const enumParam = <T extends readonly [string, ...string[]]>(name: string, values: T) =>
   z.enum(values, { error: `${name} must be one of: ${values.join(', ')}` });
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const isRealDate = (s: string) =>
+  ISO_DATE.test(s) && !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().startsWith(s);
+
 const isoDate = (name: string) =>
   z
     .string({ error: `${name} must be a date in YYYY-MM-DD format` })
-    .regex(/^\d{4}-\d{2}-\d{2}$/, `${name} must be a date in YYYY-MM-DD format`)
-    .refine(
-      (s) => !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().startsWith(s),
-      `${name} must be a real calendar date`,
-    );
+    // abort: a malformed value gets one error, not also "must be a real calendar date".
+    .regex(ISO_DATE, { error: `${name} must be a date in YYYY-MM-DD format`, abort: true })
+    .refine(isRealDate, `${name} must be a real calendar date`);
 
 /** `sort=-runs,name`: comma-separated whitelisted fields, `-` prefix = descending. */
 const sortParam = (fields: readonly string[]) => {
@@ -76,10 +78,16 @@ export const PlayersQuery = z
     minRuns: intParam('minRuns', 0, 100_000).optional(),
     maxRuns: intParam('maxRuns', 0, 100_000).optional(),
   })
-  .refine((v) => v.minRuns === undefined || v.maxRuns === undefined || v.minRuns <= v.maxRuns, {
-    message: 'minRuns must be less than or equal to maxRuns',
-    path: ['minRuns'],
-  });
+  // Cross-field rules only compare values that are valid on their own. zod 4 still runs an
+  // object refine after a field has failed (with the raw input), which would add a second,
+  // misleading error to `minRuns=abc&maxRuns=1`.
+  .refine(
+    (v) => typeof v.minRuns !== 'number' || typeof v.maxRuns !== 'number' || v.minRuns <= v.maxRuns,
+    {
+      message: 'minRuns must be less than or equal to maxRuns',
+      path: ['minRuns'],
+    },
+  );
 
 export const MATCH_SORT_FIELDS = ['date', 'id'] as const;
 export const MatchesQuery = z
@@ -93,10 +101,15 @@ export const MatchesQuery = z
     from: isoDate('from').optional(),
     to: isoDate('to').optional(),
   })
-  .refine((v) => v.from === undefined || v.to === undefined || v.from <= v.to, {
-    message: 'from must be on or before to',
-    path: ['from'],
-  });
+  .refine(
+    (v) =>
+      v.from === undefined ||
+      v.to === undefined ||
+      !isRealDate(v.from) ||
+      !isRealDate(v.to) ||
+      v.from <= v.to,
+    { message: 'from must be on or before to', path: ['from'] },
+  );
 
 export const TEAM_SORT_FIELDS = ['name', 'titles'] as const;
 export const TeamsQuery = z.strictObject({ sort: sortParam(TEAM_SORT_FIELDS).optional() });

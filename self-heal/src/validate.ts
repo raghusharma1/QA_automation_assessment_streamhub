@@ -1,14 +1,19 @@
 /**
  * Step 3: VALIDATION before anything is proposed. Every candidate must pass, in order:
- *   1. schema:    the model's output parses as a structured candidate (zod)
- *   1b. stable:   it doesn't identify the element by data (numbers in a name or text). A locator
+ *   1. schema:    the model's output parses as a structured candidate (zod; checked in cli.ts)
+ *   2. grounded:  every id/name/label/text appears in the evidence the model was shown
+ *                 (snapshot, broken locator, failure output). Rejects remembered or invented
+ *                 locators: the model once proposed '#emiamount' "from my recollection".
+ *   3. stable:    it doesn't identify the element by data (numbers in a name or text). A locator
  *                 like getByText('₹44,986') finds the EMI by the very value the test asserts:
  *                 circular, and it turns a wrong value into a "missing element". It passed every
  *                 other gate in the first live run, which is why this gate exists.
- *   2. unique:    exactly one element matches on the live page
- *   3. visible:   that element is visible
- *   4. role fits: its ARIA role fits how the steps use it (fill -> textbox, click -> link/button…)
- *   5. re-run:    the failing scenario passes 3 times in a row with the candidate patched in.
+ *   4. unique:    exactly one element matches on the live page
+ *   5. exact preferred ("specific"): a non-exact name/label is rejected when its exact variant
+ *                 is also unique; the CLI then tries the exact variant itself
+ *   6. visible:   that element is visible
+ *   7. role fits: its ARIA role fits how the steps use it (fill -> textbox, click -> link/button…)
+ *   8. re-run:    the failing scenario passes 3 times in a row with the candidate patched in.
  *                 The scenario's own post-conditions are the semantic check: a candidate that
  *                 finds the WRONG element fails them.
  * The patch only ever replaces the locator expression; assertions and expected values are

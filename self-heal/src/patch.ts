@@ -21,7 +21,9 @@ export function patchedSource(source: string, target: Target, newExpression: str
       `expected the locator expression exactly once in ${target.file}, found ${occurrences}`,
     );
   }
-  return source.replace(target.expression, newExpression);
+  // A replacer function, not a string: in a replacement string `$&`, `` $` `` and `$'` are
+  // expanded, so model-supplied text containing them could splice other source into the file.
+  return source.replace(target.expression, () => newExpression);
 }
 
 /** Applies the patch for the duration of `fn` and always restores the original, verified. */
