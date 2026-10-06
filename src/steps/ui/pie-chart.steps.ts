@@ -49,7 +49,7 @@ Then(
       contentType: 'application/json',
     });
     await $testInfo.attach('pie-chart.png', {
-      body: await pie.container.screenshot(),
+      body: await pie.screenshotWhenDrawn(),
       contentType: 'image/png',
     });
 

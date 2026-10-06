@@ -84,7 +84,7 @@ Then(
     await expect(chart.barSegments).toHaveCount(expectedYears * 2);
 
     await $testInfo.attach('bar-chart.png', {
-      body: await chart.container.screenshot(),
+      body: await chart.screenshotWhenDrawn(),
       contentType: 'image/png',
     });
     // Measured on the page (the assertions above already passed); the expected value is kept
@@ -151,7 +151,7 @@ Then(
     const tooltip = BarChart.parseTooltip(tooltipText);
 
     await $testInfo.attach('bar-tooltip.png', {
-      body: await chart.container.screenshot(),
+      body: await chart.screenshotWhenDrawn(),
       contentType: 'image/png',
     });
     await $testInfo.attach('bar-tooltip.json', {

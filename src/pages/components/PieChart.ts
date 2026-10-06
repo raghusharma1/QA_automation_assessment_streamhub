@@ -1,6 +1,11 @@
 import type { Locator, Page } from '@playwright/test';
 import { parsePercent } from '../../support/inr';
-import { readChartPoints, waitForChartData, type ChartPoint } from './highcharts';
+import {
+  readChartPoints,
+  screenshotWhenDrawn,
+  waitForChartData,
+  type ChartPoint,
+} from './highcharts';
 
 /**
  * The "Break-up of Total Payment" pie chart (Highcharts 8.1, SVG).
@@ -44,6 +49,11 @@ export class PieChart {
   }
 
   /** Slice values from the chart model, e.g. [{name: 'Principal Loan Amount', y: 1000000}, ...]. */
+  /** The chart once its drawing animation has finished (see screenshotWhenDrawn). */
+  screenshotWhenDrawn(): Promise<Buffer> {
+    return screenshotWhenDrawn(this.page, PieChart.containerId);
+  }
+
   async modelSlices(): Promise<ChartPoint[]> {
     return readChartPoints(this.page, PieChart.containerId);
   }

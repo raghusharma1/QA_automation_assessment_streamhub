@@ -1,6 +1,11 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { parseInr } from '../../support/inr';
-import { readChartPoints, waitForChartData, type ChartPoint } from './highcharts';
+import {
+  readChartPoints,
+  screenshotWhenDrawn,
+  waitForChartData,
+  type ChartPoint,
+} from './highcharts';
 
 export type BarSeries = 'Interest' | 'Principal';
 
@@ -37,6 +42,11 @@ export class BarChart {
     );
     this.yearLabels = this.container.locator('.highcharts-xaxis-labels text');
     this.tooltip = this.container.locator('.highcharts-tooltip');
+  }
+
+  /** The chart once its drawing animation has finished (see screenshotWhenDrawn). */
+  screenshotWhenDrawn(): Promise<Buffer> {
+    return screenshotWhenDrawn(this.page, BarChart.containerId);
   }
 
   async modelPoints(): Promise<ChartPoint[]> {

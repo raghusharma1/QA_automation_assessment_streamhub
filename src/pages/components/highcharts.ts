@@ -58,3 +58,36 @@ export async function waitForChartData<T>(
     .poll(async () => select(await readChartPoints(page, containerId)), { message })
     .toEqual(expected);
 }
+
+/**
+ * Screenshot of the chart once its drawing animation has finished.
+ *
+ * The data can already be right while Highcharts is still animating: bars grow and the Balance
+ * line is revealed through a widening clip for about a second after a redraw. A screenshot taken
+ * then (it happened in a curated run) shows half-drawn bars. So: wait until the drawn geometry
+ * (bar and slice shapes, line paths, clip widths) is identical on two reads 250 ms apart.
+ */
+export async function screenshotWhenDrawn(page: Page, containerId: string): Promise<Buffer> {
+  let previous = '';
+  await expect
+    .poll(
+      async () => {
+        const current = await page.evaluate((id) => {
+          const root = document.getElementById(id);
+          if (!root) return '';
+          const shapes = root.querySelectorAll(
+            '.highcharts-series rect, .highcharts-series path, clipPath rect',
+          );
+          return [...shapes]
+            .map((el) => ['x', 'y', 'width', 'height', 'd'].map((a) => el.getAttribute(a)).join())
+            .join('|');
+        }, containerId);
+        const settled = current !== '' && current === previous;
+        previous = current;
+        return settled;
+      },
+      { message: `#${containerId} finished its drawing animation`, intervals: [250] },
+    )
+    .toBe(true);
+  return page.locator(`#${containerId}`).screenshot();
+}
