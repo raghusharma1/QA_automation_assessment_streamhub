@@ -23,7 +23,13 @@ const ROLES = [
   'slider',
   'menuitem',
 ] as const;
-const text = z.string().min(1).max(120);
+// No control characters: a newline would split the single-quoted literal toCode() emits.
+const CONTROL_CHARS = /[\x00-\x1f\x7f]/; // eslint-disable-line no-control-regex
+const text = z
+  .string()
+  .min(1)
+  .max(120)
+  .refine((s) => !CONTROL_CHARS.test(s), 'no control characters');
 const rationale = z.string().min(1).max(400);
 
 export const CandidateSchema = z.discriminatedUnion('strategy', [

@@ -102,9 +102,14 @@ Two layers, because neither is enough alone:
 2. **At runtime: classification in code**, never by the model
    ([`self-heal/src/failures.ts`](self-heal/src/failures.ts)). From Playwright's JSON report:
    - `strict mode violation` → **ambiguous** locator (healable)
+   - a `TimeoutError` whose call log says `locator resolved to <…>` → the element **exists but was not actionable** (disabled, covered by an overlay, not editable): possibly a real product bug, so **refused**
    - `element(s) not found`, or a `TimeoutError … waiting for locator` → **missing** element (healable)
    - an assertion with `Received:`, where the element was found and its value is wrong → **not a locator problem** (refused)
    - anything else → refused
+
+   The healer needs the `error-context.md` files that `npm run test:broken` writes next to its report
+   (they hold the page snapshot). If one is missing, for example on a fresh clone, it stops with
+   "run `npm run test:broken` first" instead of sending the model "(not available)".
 
    The failing step's source line (`error.location`) identifies the page-object member
    (`legacyPage.loanAmountInput.fill(…)`), and the page object gives its expression and intent.
@@ -129,13 +134,15 @@ can't smuggle code into a patch.
 
 **Model access** ([`llm.ts`](self-heal/src/llm.ts)):
 
-| Adapter       | When                                                | Notes                                                                                                                                                                                                                                                   |
-| ------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `claude-code` | default for a live run                              | headless Claude Code (`claude -p`) using the developer's existing login, so **no API key** is stored anywhere. Run with no tools (`--tools ""`), no MCP servers, no saved session, and `--json-schema` for structured output: the model can only answer |
-| `anthropic`   | if `ANTHROPIC_API_KEY` is in the git-ignored `.env` | Messages API                                                                                                                                                                                                                                            |
-| `replay`      | a recorded response exists                          | `npm run heal -- --record` saves each real response in `self-heal/cassettes/`. Later runs replay it offline and deterministically, and say if the prompt has changed since recording                                                                    |
+| Adapter       | When                                                 | Notes                                                                                                                                                                                                                                                                                                                                                      |
+| ------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `claude-code` | default for a live run                               | headless Claude Code (`claude -p`) using the developer's existing login, so **no API key** is stored anywhere. Run with no tools (`--tools ""`), no MCP servers, no saved session, and `--json-schema` for structured output: the model can only answer                                                                                                    |
+| `anthropic`   | `HEAL_LLM=anthropic` + `ANTHROPIC_API_KEY` in `.env` | Messages API                                                                                                                                                                                                                                                                                                                                               |
+| `replay`      | a recorded response exists                           | `npm run heal -- --record` always asks a live model and saves each response in `self-heal/cassettes/` (a new round-1 answer removes that locator's stale round-2 cassette). Later runs replay offline and say if the prompt has changed since recording: the page structure, the failure or the round-2 feedback (live values in the snapshot are ignored) |
 
-The model is configurable (`HEAL_MODEL`), not hardcoded.
+The model is configurable (`HEAL_MODEL`), not hardcoded. A failed model call (timeout, rate limit,
+unparsable reply) marks that one failure "needs a human" and the run continues, so proposals
+already validated for the others still reach the report.
 
 ## 4. Validation before applying
 
@@ -170,6 +177,22 @@ is refused.
 **Output.** `self-heal/out/healing-report.md` (every candidate, every gate, the model's
 rationale) plus one `.diff` per proposal. **Never auto-applied**: a person reviews the diff,
 applies it in a normal commit, and the full suite runs in CI.
+
+### Known limits
+
+- The unique, visible and role gates check the page as first loaded, not the state at the failing
+  step; the re-run covers the real flow.
+- Grounding is a substring check: a short, common name is easily "grounded", and a hostile page
+  can ground anything it contains. The re-run and propose-only output are the backstops.
+- The stability gate is a heuristic: digits in a real label ("Step 2") are a false positive, and
+  non-numeric data (a player's name) is a false negative.
+- A replay with "prompt changed" still uses the recorded answer (and re-validates it live);
+  re-record with `--record` to get a new one.
+- Targets are found by member name across page objects, and cassettes and patches are keyed by
+  member: two page objects with the same member name, or two failures on one member, would
+  collide. Neither happens in this suite.
+- No lock between concurrent `heal` runs; the start-up check only refuses a page object that is
+  already modified. The restore check hashes the file's text, not its raw bytes.
 
 ## 5. Why propose instead of auto-heal?
 

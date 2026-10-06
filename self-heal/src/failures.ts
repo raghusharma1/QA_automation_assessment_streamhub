@@ -6,7 +6,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 
 export type FailureKind =
-  'strict-mode-violation' | 'element-not-found' | 'assertion-mismatch' | 'other';
+  'strict-mode-violation' | 'element-not-found' | 'not-actionable' | 'assertion-mismatch' | 'other';
 
 export interface Failure {
   title: string;
@@ -36,6 +36,17 @@ export function classify(message: string): Classification {
       kind: 'strict-mode-violation',
       healable: true,
       reason: 'locator matched more than one element',
+    };
+  }
+  // A timeout AFTER the locator resolved means the element exists but wasn't actionable
+  // (disabled, covered by an overlay, not editable). That can be a real product bug, and a
+  // "heal" pointing at some other element would mask it.
+  if (/TimeoutError/.test(m) && /locator resolved to </.test(m)) {
+    return {
+      kind: 'not-actionable',
+      healable: false,
+      reason:
+        'the locator found its element, but the element was not actionable (disabled, covered or not editable): not a locator problem',
     };
   }
   if (
@@ -94,14 +105,21 @@ export function readFailures(reportPath: string): Failure[] {
         const result = test.results.at(-1);
         if (!result || result.status === 'passed' || result.status === 'skipped') continue;
         const contextPath = result.attachments.find((a) => a.name === 'error-context')?.path;
+        // The report references the error context by absolute path, and test-results/ is not
+        // committed. A missing file must stop the run: silently sending "(not available)" makes
+        // the model blind, which is exactly the bug the first live run had.
+        if (contextPath && !existsSync(contextPath)) {
+          throw new Error(
+            `The page snapshot for "${spec.title}" is missing (${contextPath}).\n` +
+              'Run `npm run test:broken` on this machine first: the healer needs the ' +
+              'error-context.md files that run writes next to its report.',
+          );
+        }
         failures.push({
           title: spec.title,
           message: stripAnsi(result.error?.message ?? ''),
           location: result.error?.location,
-          snapshot:
-            contextPath && existsSync(contextPath)
-              ? extractSnapshot(readFileSync(contextPath, 'utf8'))
-              : '',
+          snapshot: contextPath ? extractSnapshot(readFileSync(contextPath, 'utf8')) : '',
         });
       }
     }

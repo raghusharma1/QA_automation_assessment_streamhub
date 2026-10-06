@@ -55,11 +55,28 @@ const identifyingText = (c: Candidate) =>
     .filter(Boolean)
     .join(' ');
 
+const MATCHER_STATES = new Set([
+  'visible',
+  'hidden',
+  'enabled',
+  'disabled',
+  'checked',
+  'unchecked',
+  'editable',
+  'attached',
+  'detached',
+  'focused',
+  'empty',
+]);
+
 /** Values a failure asserts or received, e.g. `Expected: "9"`, `Received: "₹44,986"`. */
 export function assertedValues(message: string): string[] {
-  return [...message.matchAll(/^\s*(?:Expected|Received)(?: [a-z]+)?:\s*"?(.+?)"?\s*$/gm)]
-    .map((m) => m[1]!.trim())
-    .filter((v) => v.length > 1 && !v.startsWith('/'));
+  return (
+    [...message.matchAll(/^\s*(?:Expected|Received)(?: [a-z]+)?:\s*"?(.+?)"?\s*$/gm)]
+      .map((m) => m[1]!.trim())
+      // Matcher states ("Expected: visible", "Received: hidden") are not data values.
+      .filter((v) => v.length > 1 && !v.startsWith('/') && !MATCHER_STATES.has(v))
+  );
 }
 
 /**

@@ -38,17 +38,17 @@ npm test
 automatically, SQL runs in-process on [PGlite](https://pglite.dev) (no database to install), and
 no API key or `.env` file is needed. Other commands:
 
-| Command                                                   | What it does                                                                               |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `npm run test:ui` / `test:api` / `test:sql` / `test:unit` | one project                                                                                |
-| `npm run test:ci`                                         | all four with `TEST_ENV=ci` (retries, 2 workers, longer timeouts)                          |
-| `npm run test:broken`                                     | the deliberately broken self-healing suite (fails on purpose; separate config and reports) |
-| `npm run heal`                                            | the AI healer on those failures (replays recorded model responses; no login or key needed) |
-| `npm run lint:locators`                                   | static brittle-locator lint                                                                |
-| `npm run check`                                           | `tsc`, type-aware ESLint, Prettier                                                         |
-| `npm run api:start`                                       | the API on <http://localhost:3000>                                                         |
-| `npm run report`                                          | open the last Playwright HTML report                                                       |
-| `bash sql/scripts/run-in-docker.sh`                       | optional: run the SQL with real `psql` on `postgres:18` in a throwaway container           |
+| Command                                                   | What it does                                                                                                                            |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run test:ui` / `test:api` / `test:sql` / `test:unit` | one project                                                                                                                             |
+| `npm run test:ci`                                         | all four with `TEST_ENV=ci` (retries, 2 workers, longer timeouts)                                                                       |
+| `npm run test:broken`                                     | the deliberately broken self-healing suite (fails on purpose; separate config and reports)                                              |
+| `npm run heal`                                            | the AI healer on those failures; run `test:broken` first on the same machine (replays recorded model responses; no login or key needed) |
+| `npm run lint:locators`                                   | static brittle-locator lint                                                                                                             |
+| `npm run check`                                           | `tsc`, type-aware ESLint, Prettier                                                                                                      |
+| `npm run api:start`                                       | the API on <http://localhost:3000>                                                                                                      |
+| `npm run report`                                          | open the last Playwright HTML report                                                                                                    |
+| `bash sql/scripts/run-in-docker.sh`                       | optional: run the SQL with real `psql` on `postgres:18` in a throwaway container                                                        |
 
 ## Requirement → where it is
 

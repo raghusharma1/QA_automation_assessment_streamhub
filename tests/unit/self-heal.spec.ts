@@ -9,9 +9,9 @@ import {
   HealResponseSchema,
   toCode,
 } from '../../self-heal/src/candidates';
-import { classify, extractSnapshot } from '../../self-heal/src/failures';
+import { classify, extractSnapshot, readFailures } from '../../self-heal/src/failures';
 import { lintSource } from '../../self-heal/src/lint-locators';
-import { promptFingerprint } from '../../self-heal/src/llm';
+import { chooseAdapter, promptFingerprint } from '../../self-heal/src/llm';
 import { makeDiff, patchedSource } from '../../self-heal/src/patch';
 import {
   assertedValues,
@@ -313,11 +313,13 @@ test.describe('self-heal: specificity, data and replay fingerprints', () => {
   });
 
   test('prompt fingerprint ignores live values and refs, but not structure', () => {
-    const a = 'INTENT: x\n- textbox "Interest Rate" [ref=e12]: "9"\n- paragraph: ₹44,986';
-    const sameStructure =
-      'INTENT: x\n- textbox "Interest Rate" [ref=e99]: "10.5"\n- paragraph: ₹46,607';
-    const different =
-      'INTENT: x\n- textbox "Rate of interest" [ref=e12]: "9"\n- paragraph: ₹44,986';
+    const prompt = (snapshot: string) =>
+      `INTENT: x\n\nACCESSIBILITY SNAPSHOT AT FAILURE:\n\n${snapshot}`;
+    const a = prompt('- textbox "Interest Rate" [ref=e12]: "9"\n- paragraph: ₹44,986');
+    const sameStructure = prompt(
+      '- textbox "Interest Rate" [ref=e99]: "10.5"\n- paragraph: ₹46,607',
+    );
+    const different = prompt('- textbox "Rate of interest" [ref=e12]: "9"\n- paragraph: ₹44,986');
     expect(promptFingerprint(a)).toBe(promptFingerprint(sameStructure));
     expect(promptFingerprint(a)).not.toBe(promptFingerprint(different));
   });
@@ -349,5 +351,88 @@ test.describe('self-heal: static brittle-locator lint', () => {
       'x.ts',
     );
     expect(finding?.allowed).toBe('index comes from chart data');
+  });
+});
+
+test.describe('self-heal: hardening from the pre-run review', () => {
+  test('--record always asks a live model, even when a cassette exists', () => {
+    // personalLoanTab has a committed cassette.
+    expect(chooseAdapter('personalLoanTab', false, undefined)).toBe('replay');
+    expect(chooseAdapter('personalLoanTab', true, undefined)).toBe('claude-code');
+    expect(chooseAdapter('personalLoanTab', true, 'anthropic')).toBe('anthropic');
+    expect(() => chooseAdapter('personalLoanTab', true, 'replay')).toThrow(/live model/);
+    expect(chooseAdapter('noCassetteForThis', false, undefined)).toBe('claude-code');
+  });
+
+  test('a timeout on an element that WAS found is not a locator problem', () => {
+    const resolved = (reason: string) =>
+      `TimeoutError: locator.click: Timeout 5000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Calculate' })\n  - locator resolved to <button disabled>Calculate</button>\n  - ${reason}`;
+    for (const reason of [
+      'element is not enabled',
+      '<div class="ad"> intercepts pointer events',
+      'element is not editable',
+    ]) {
+      expect(classify(resolved(reason))).toMatchObject({ kind: 'not-actionable', healable: false });
+    }
+    // Still healable when nothing resolved.
+    expect(classify(MESSAGES.timeout).kind).toBe('element-not-found');
+  });
+
+  test('a missing error-context file stops the run instead of blinding the model', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'heal-report-'));
+    const report = path.join(dir, 'results.json');
+    const attachment = { name: 'error-context', path: path.join(dir, 'gone', 'error-context.md') };
+    const result = {
+      status: 'failed',
+      error: { message: MESSAGES.timeout },
+      attachments: [attachment],
+    };
+    writeFileSync(
+      report,
+      JSON.stringify({
+        suites: [{ specs: [{ title: 'Broken 2', tests: [{ results: [result] }] }] }],
+      }),
+    );
+    try {
+      expect(() => readFailures(report)).toThrow(/npm run test:broken/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('the fingerprint sees changes in the round-2 feedback', () => {
+    const base = 'INTENT: x\n\nACCESSIBILITY SNAPSHOT AT FAILURE:\n\n- paragraph: ₹44,986';
+    const feedback = (code: string, reason: string) =>
+      `${base}\n\nPREVIOUS CANDIDATES WERE REJECTED BY VALIDATION ON THE LIVE PAGE:\n\n- ${code}: failed "${reason}" (3 element(s) matched)`;
+    expect(promptFingerprint(feedback("page.locator('#a p')", 'unique'))).not.toBe(
+      promptFingerprint(feedback("page.getByText('Total')", 'grounded')),
+    );
+    // Snapshot values are still treated as live noise.
+    expect(promptFingerprint(base)).toBe(promptFingerprint(base.replace('44,986', '33,038')));
+  });
+
+  test('a member without a parsable describe() is skipped, not merged into the next one', () => {
+    for (const intent of ['"double quoted"', "'Lender\\'s rate'"]) {
+      const source = `this.a = page.locator('#a').describe(${intent});\nthis.b = page.locator('#b').describe('B');`;
+      const targets = parseTargets(source, 'x.ts');
+      expect(targets.map((t) => t.member)).toEqual(['b']);
+      expect(targets[0]?.expression).toBe("page.locator('#b')");
+    }
+  });
+
+  test('candidate text with control characters is rejected', () => {
+    const result = CandidateSchema.safeParse({
+      strategy: 'text',
+      text: 'a\nb',
+      exact: true,
+      rationale: 'r',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  test('matcher states are not mistaken for asserted data', () => {
+    const message =
+      'Error: expect(locator).toBeVisible() failed\nExpected: visible\nReceived: hidden';
+    expect(assertedValues(message)).toEqual([]);
   });
 });

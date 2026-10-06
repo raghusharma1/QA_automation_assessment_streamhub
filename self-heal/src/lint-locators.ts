@@ -96,10 +96,14 @@ if (require.main === module) {
   const root = path.resolve(__dirname, '..', '..');
   const excluded = process.argv
     .filter((a) => a.startsWith('--exclude='))
-    .map((a) => a.slice('--exclude='.length).replace(/\/?$/, '/'));
+    // Accept "src/pages/legacy", "./src/pages/legacy/", "src\pages\legacy" or a single file.
+    .map((a) =>
+      a.slice('--exclude='.length).replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/$/, ''),
+    );
   const findings = tsFiles(path.join(root, 'src'))
     .map((f) => path.relative(root, f).split(path.sep).join('/'))
-    .filter((rel) => !excluded.some((prefix) => rel.startsWith(prefix)))
+    // The file itself, or anything inside the folder (`legacy/`, never `legacyX/`).
+    .filter((rel) => !excluded.some((ex) => rel === ex || rel.startsWith(`${ex}/`)))
     .flatMap((rel) => lintSource(readFileSync(path.join(root, rel), 'utf8'), rel));
   if (excluded.length > 0) console.log(`Excluded: ${excluded.join(', ')}\n`);
   const open = findings.filter((f) => !f.allowed);

@@ -113,7 +113,16 @@ async function main() {
       // model ONCE. More rounds would just spend tokens guessing.
       for (let round = 1; round <= MAX_ROUNDS && !outcome.proposal; round++) {
         const key = round === 1 ? target.member : `${target.member}--round-${round}`;
-        const answer = await askModel(key, prompt, { record });
+        // One failed call (timeout, rate limit, unparsable reply) costs this failure only: the
+        // proposals already validated for the others still reach the report.
+        let answer: Awaited<ReturnType<typeof askModel>>;
+        try {
+          answer = await askModel(key, prompt, { record });
+        } catch (error) {
+          outcome.note = `Model call failed in round ${round}: ${error instanceof Error ? error.message : String(error)}. Needs a human.`;
+          console.log(`  ${outcome.note}`);
+          break;
+        }
         outcome.models.push(
           `round ${round}: ${answer.adapter}, ${answer.model}${answer.promptChanged ? ' (prompt changed since recording)' : ''}`,
         );

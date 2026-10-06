@@ -20,10 +20,15 @@ export interface Target {
 
 const ROOT = path.resolve(__dirname, '..', '..');
 
-/** `this.member = <expression>.describe('intent');` (multi-line aware). */
+/**
+ * `this.member = <expression>.describe('intent');` (multi-line aware). The expression may not
+ * cross a `;` or another `this.` assignment: a member without a single-quoted describe() is
+ * skipped rather than swallowed into the next member's expression (which would let a patch for
+ * one member delete another).
+ */
 export function parseTargets(source: string, file: string): Omit<Target, 'usages'>[] {
   const targets: Omit<Target, 'usages'>[] = [];
-  const pattern = /this\.(\w+)\s*=\s*([\s\S]*?)\s*\.describe\(\s*'([^']+)'\s*\)\s*;/g;
+  const pattern = /this\.(\w+)\s*=\s*((?:(?!this\.)[^;])*?)\s*\.describe\(\s*'([^'\\]+)'\s*\)\s*;/g;
   for (const m of source.matchAll(pattern)) {
     targets.push({ file, member: m[1]!, expression: m[2]!, intent: m[3]! });
   }
