@@ -17,9 +17,9 @@ doesn't render them) and are also uploaded as artifacts by every CI run.
 
 | Suite                                          | Result                                   | Evidence                                                                                                                                                |
 | ---------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `unit`: EMI and amortization oracles, healer   | ✅ 39 / 39                               | [Playwright HTML](reports/playwright-html/index.html) · [JSON](reports/playwright-results.json)                                                         |
-| `sql`: B4, both scenarios + 13 mutation checks | ✅ 21 / 21                               | [screenshots + raw output](sql/results) · [real `psql` transcripts](sql/results/psql)                                                                   |
-| `api`: B2 against our B1 API                   | ✅ 80 / 80                               | [Cucumber HTML](reports/cucumber/index.html) · [JUnit](reports/cucumber/report.xml) · [coverage matrix](api/README.md#status-code-and-parameter-matrix) |
+| `unit`: EMI and amortization oracles, healer   | ✅ 47 / 47                               | [Playwright HTML](reports/playwright-html/index.html) · [JSON](reports/playwright-results.json)                                                         |
+| `sql`: B4, both scenarios + 14 mutation checks | ✅ 24 / 24                               | [screenshots + raw output](sql/results) · [real `psql` transcripts](sql/results/psql)                                                                   |
+| `api`: B2 against our B1 API                   | ✅ 100 / 100                             | [Cucumber HTML](reports/cucumber/index.html) · [JUnit](reports/cucumber/report.xml) · [coverage matrix](api/README.md#status-code-and-parameter-matrix) |
 | `ui`: B3 TC1 + TC2 on the live site            | ✅ 5 / 5                                 | [Cucumber HTML](reports/cucumber/index.html) · [screenshots below](#evidence)                                                                           |
 | `self-healing`: 5 broken locators + 1 control  | 🔴 6 / 6 fail **by design**              | [results](reports/self-healing/results.json) · [HTML](reports/self-healing/html/index.html)                                                             |
 | AI healer on those 6 failures                  | 4 proposed · 1 refused · 1 needs a human | [healing report](self-heal/out/healing-report.md) · [patches](self-heal/out/patches) · [SELF_HEALING.md](SELF_HEALING.md)                               |
@@ -123,7 +123,7 @@ flowchart LR
   importing the test framework). If they shared schemas, a schema bug would make the API and its
   tests agree.
 - **Mutation checks** prove the tests can fail: breaking the oracle, the API or a SQL boundary on
-  purpose makes exactly the expected tests fail. The 13 SQL mutants are automated tests.
+  purpose makes exactly the expected tests fail. The 14 SQL mutants are automated tests.
 - **Separate self-healing config** ([`playwright.self-heal.config.ts`](playwright.self-heal.config.ts)),
   so the broken locators stay broken without making `npm test` red, and their reports never
   overwrite the main evidence.
