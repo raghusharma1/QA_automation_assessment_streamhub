@@ -34,38 +34,40 @@ npx playwright install chromium
 npm test
 ```
 
-`npm test` runs the `unit`, `sql`, `api` and `ui` projects. The API is started and stopped
+`npm test` runs the `unit`, `sql`, `api` and `ui` projects and is the only command that writes the
+full reports in `reports/` (a single-project run such as `npm run test:ui` replaces them with a
+partial report; delete `reports/` and run `npm test` again to regenerate them). The API is started and stopped
 automatically, SQL runs in-process on [PGlite](https://pglite.dev) (no database to install), and
 no API key or `.env` file is needed. Other commands:
 
 | Command                                                   | What it does                                                                                                                            |
 | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `npm run test:ui` / `test:api` / `test:sql` / `test:unit` | one project                                                                                                                             |
-| `npm run test:ci`                                         | all four with `TEST_ENV=ci` (retries, 2 workers, longer timeouts)                                                                       |
+| `npm run test:ci`                                         | all four with `TEST_ENV=ci` (2 workers, longer timeouts; retries only on the live ui project)                                           |
 | `npm run test:broken`                                     | the deliberately broken self-healing suite (fails on purpose; separate config and reports)                                              |
 | `npm run heal`                                            | the AI healer on those failures; run `test:broken` first on the same machine (replays recorded model responses; no login or key needed) |
 | `npm run lint:locators`                                   | static brittle-locator lint                                                                                                             |
 | `npm run check`                                           | `tsc`, type-aware ESLint, Prettier                                                                                                      |
 | `npm run api:start`                                       | the API on <http://localhost:3000>                                                                                                      |
 | `npm run report`                                          | open the last Playwright HTML report                                                                                                    |
-| `bash sql/scripts/run-in-docker.sh`                       | optional: run the SQL with real `psql` on `postgres:18` in a throwaway container                                                        |
+| `bash sql/scripts/run-in-docker.sh` (Git Bash)            | optional: run the SQL with real `psql` on `postgres:18` in a throwaway container                                                        |
 
 ## Requirement → where it is
 
-| Requirement                                                   | Where                                                                                                                                                                                                    |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework: feature, step definition and page object files     | [`features/`](features), [`src/steps/`](src/steps), [`src/pages/`](src/pages) (page + components)                                                                                                        |
-| Environment config, no hardcoded URLs                         | [`env/local.env`](env/local.env), [`env/ci.env`](env/ci.env), validated in [`src/config/env.ts`](src/config/env.ts) (the only file that reads `process.env`)                                             |
-| Dynamic, resilient locators                                   | role / label locators in [`EmiCalculatorPage.ts`](src/pages/EmiCalculatorPage.ts) and [`components/`](src/pages/components); enforced by `lint:locators --strict` in CI                                  |
-| **B1** API with filter, sort, paginate, search and errors     | [`api/`](api) (Hono + zod), design and conventions in [`api/README.md`](api/README.md)                                                                                                                   |
-| **B2** API tests: happy paths, invalid and edge cases, shapes | [`features/api/`](features/api), contracts in [`src/api-clients/contracts.ts`](src/api-clients/contracts.ts), "Covered by" matrix in [`api/README.md`](api/README.md)                                    |
-| **B3 TC1** Home loan EMI + pie chart                          | [`emi-home-loan-pie-chart.feature`](features/ui/emi-home-loan-pie-chart.feature), oracle [`emi-math.ts`](src/support/emi-math.ts)                                                                        |
-| **B3 TC2** Personal loan sliders, month, bars, tooltip        | [`emi-personal-loan-bar-chart.feature`](features/ui/emi-personal-loan-bar-chart.feature), [`SliderControl.ts`](src/pages/components/SliderControl.ts), [`BarChart.ts`](src/pages/components/BarChart.ts) |
-| **B4** SQL with schema and output screenshots                 | [`sql/`](sql), results in [`sql/results/`](sql/results), definitions in [`sql/README.md`](sql/README.md)                                                                                                 |
-| 3–5 broken locators, left broken                              | [`src/pages/legacy/LegacyEmiCalculatorPage.ts`](src/pages/legacy/LegacyEmiCalculatorPage.ts) (5 + a negative control)                                                                                    |
-| Self-healing markdown (detection, prompt, validation) + POC   | [`SELF_HEALING.md`](SELF_HEALING.md), POC in [`self-heal/`](self-heal)                                                                                                                                   |
-| Claude Code reflection                                        | [below](#claude-code-reflection), full log in [`docs/ai-log.md`](docs/ai-log.md)                                                                                                                         |
-| Test execution results (report, screenshots, logs)            | [`reports/`](reports), [`sql/results/`](sql/results), [`self-heal/out/`](self-heal/out), [evidence below](#evidence)                                                                                     |
+| Requirement                                                   | Where                                                                                                                                                                                                                                                                                      |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Framework: feature, step definition and page object files     | [`features/`](features), [`src/steps/`](src/steps), [`src/pages/`](src/pages) (page + components)                                                                                                                                                                                          |
+| Environment config, no hardcoded URLs                         | [`env/local.env`](env/local.env), [`env/ci.env`](env/ci.env), validated in [`src/config/env.ts`](src/config/env.ts) (the only file that reads `process.env`)                                                                                                                               |
+| Dynamic, resilient locators                                   | role / label locators where the site exposes them, otherwise stable ids or Highcharts classes, each justified in a comment ([`EmiCalculatorPage.ts`](src/pages/EmiCalculatorPage.ts), [`components/`](src/pages/components)); brittle shapes are blocked by `lint:locators --strict` in CI |
+| **B1** API with filter, sort, paginate, search and errors     | [`api/`](api) (Hono + zod), design and conventions in [`api/README.md`](api/README.md)                                                                                                                                                                                                     |
+| **B2** API tests: happy paths, invalid and edge cases, shapes | [`features/api/`](features/api), contracts in [`src/api-clients/contracts.ts`](src/api-clients/contracts.ts), "Covered by" matrix in [`api/README.md`](api/README.md)                                                                                                                      |
+| **B3 TC1** Home loan EMI + pie chart                          | [`emi-home-loan-pie-chart.feature`](features/ui/emi-home-loan-pie-chart.feature), oracle [`emi-math.ts`](src/support/emi-math.ts)                                                                                                                                                          |
+| **B3 TC2** Personal loan sliders, month, bars, tooltip        | [`emi-personal-loan-bar-chart.feature`](features/ui/emi-personal-loan-bar-chart.feature), [`SliderControl.ts`](src/pages/components/SliderControl.ts), [`BarChart.ts`](src/pages/components/BarChart.ts)                                                                                   |
+| **B4** SQL with schema and output screenshots                 | [`sql/`](sql), results in [`sql/results/`](sql/results), definitions in [`sql/README.md`](sql/README.md)                                                                                                                                                                                   |
+| 3–5 broken locators, left broken                              | [`src/pages/legacy/LegacyEmiCalculatorPage.ts`](src/pages/legacy/LegacyEmiCalculatorPage.ts) (5 + a negative control)                                                                                                                                                                      |
+| Self-healing markdown (detection, prompt, validation) + POC   | [`SELF_HEALING.md`](SELF_HEALING.md), POC in [`self-heal/`](self-heal)                                                                                                                                                                                                                     |
+| Claude Code reflection                                        | [below](#claude-code-reflection), full log in [`docs/ai-log.md`](docs/ai-log.md)                                                                                                                                                                                                           |
+| Test execution results (report, screenshots, logs)            | [`reports/`](reports), [`sql/results/`](sql/results), [`self-heal/out/`](self-heal/out), [evidence below](#evidence)                                                                                                                                                                       |
 
 ## Architecture
 
@@ -241,33 +243,24 @@ Every case where AI helped, was wrong, or was corrected by review is logged in
 
 ### What worked
 
-- **The evaluator loop.** It found real gaps at every milestone: B2 needed a _required_ parameter,
-  shared schemas would have been circular, my API README claimed coverage that didn't exist, the
-  SQL mutants only asserted absence, and the blind live run.
-- **Independent oracles plus mutation checks.** They turned "the tests pass" into "the tests fail
-  for the right reason".
-- **Live recon before page objects.** It found the stale-value race, the legend symbols that would
-  have inflated the bar count, and the slider mechanics before any test depended on them.
-- **Checking AI claims against a source of truth**: the npm registry (TypeScript version,
-  a hallucinated `@eslint/config` import), the raw JSON (two wrong hand counts), installed library
-  source (playwright-bdd title formats).
+- **Independent reviewer agents** after every milestone and before the final run: they found a
+  real gap every time, including tests that could not fail.
+- **Independent oracles plus mutation checks**: "the tests pass" became "the tests fail for the
+  right reason".
+- **Live recon before page objects**, and **checking AI claims against a source of truth** (the
+  npm registry, the raw JSON, installed library source).
 
 ### What didn't
 
-- **The same escaping mistake, three times.** I edited TypeScript containing regexes through
-  shell/Python heredocs, and `\b`, `\n` and `\r` became control bytes. A byte check (`cat -A`)
-  caught it each time before running, but the lesson took three attempts: code edits go through
-  the file tools only.
-- **A sub-agent ran `taskkill /F /IM node.exe`**, killing every Node process on the machine. Now
-  a standing rule: stop only processes you started, by PID.
-- **Invented data.** I filled in Car Loan slider ranges that were never measured. Caught before
-  running; the table now only allows measured products.
-- **Wrong hand counts, twice**, in API expectations. Caught by a separate script that counts from
-  the raw JSON.
-- **Testing against synthetic fixtures** hid the self-healing blocker. Real artifacts only, now.
-- **Replay isn't perfectly stable on a live site.** The healer's recorded prompts include the live
-  accessibility snapshot, which varies slightly between runs, so Broken 1 reports "prompt changed
-  since recording". The outcome is the same, and the report says so instead of hiding it.
+- **Shell escaping:** code edited through shell or Python strings repeatedly lost backslashes and
+  backticks. Caught every time before running; code edits now go through the file tools only.
+- **Invented or wrong data** (unmeasured slider ranges, two wrong hand counts) and **synthetic
+  test fixtures** that hid the self-healing blocker. Caught by recounting from the raw data and
+  testing against real artifacts.
+- **Unsafe commands:** a sub-agent killed every Node process, and I once overwrote a local `.env`
+  without checking it first.
+
+Details, with how each was caught: [`docs/ai-log.md`](docs/ai-log.md#summary-what-worked-and-what-didnt).
 
 ## Project structure
 

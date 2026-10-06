@@ -182,8 +182,9 @@ applies it in a normal commit, and the full suite runs in CI.
 
 - The unique, visible and role gates check the page as first loaded, not the state at the failing
   step; the re-run covers the real flow.
-- Grounding is a substring check: a short, common name is easily "grounded", and a hostile page
-  can ground anything it contains. The re-run and propose-only output are the backstops.
+- Grounding checks that each id or name appears in the evidence as a whole token ("emi" doesn't
+  count because "emicalculator" is there). A common name is still easily grounded, and a hostile
+  page can ground anything it contains. The re-run and propose-only output are the backstops.
 - The stability gate is a heuristic: digits in a real label ("Step 2") are a false positive, and
   non-numeric data (a player's name) is a false negative.
 - A replay with "prompt changed" still uses the recorded answer (and re-validates it live);
@@ -192,7 +193,7 @@ applies it in a normal commit, and the full suite runs in CI.
   member: two page objects with the same member name, or two failures on one member, would
   collide. Neither happens in this suite.
 - No lock between concurrent `heal` runs; the start-up check only refuses a page object that is
-  already modified. The restore check hashes the file's text, not its raw bytes.
+  already modified.
 
 ## 5. Why propose instead of auto-heal?
 

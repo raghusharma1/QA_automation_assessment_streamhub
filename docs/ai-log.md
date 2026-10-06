@@ -5,6 +5,46 @@ and how each error was caught. The README's "Claude Code reflection" section is 
 
 Entry types: ✅ helped · ❌ AI was wrong (and how it was caught) · 🔍 found by review
 
+## Summary: what worked and what didn't
+
+**What worked**
+
+- **Reviewer agents.** A separate, read-only Claude agent briefed as a skeptical hiring-panel
+  reviewer after every milestone, and six in parallel before the final run. They found a real
+  gap every time: B2 needed a _required_ parameter, shared schemas would have been circular, the
+  API README claimed coverage that didn't exist, SQL mutants only asserted absence, the blind
+  live self-healing run, and finally tests that could not fail because the data was already in
+  the expected order.
+- **Independent oracles plus mutation checks.** They turned "the tests pass" into "the tests fail
+  for the right reason".
+- **Live recon before page objects.** It found the stale-value race, the legend symbols that would
+  have inflated the bar count, and the slider mechanics before any test depended on them.
+- **Checking AI claims against a source of truth:** the npm registry (TypeScript version, a
+  hallucinated `@eslint/config` import), the raw JSON (two wrong hand counts), installed library
+  source (playwright-bdd title formats).
+
+**What didn't**
+
+- **Shell escaping, repeatedly.** Code and markdown edited through shell or Python strings lost
+  backslashes (`\b`, `\n`, `\d` became control bytes or vanished) and backticks (template
+  literals came out empty). A byte check caught it each time before running. Code edits now go
+  through the file tools only.
+- **A sub-agent ran `taskkill /F /IM node.exe`**, killing every Node process on the machine. Now
+  a standing rule: stop only processes you started, by PID.
+- **Invented data.** Car Loan slider ranges that were never measured. Caught before running; the
+  table now only allows measured products.
+- **Wrong hand counts, twice**, in API expectations. Caught by a separate script that counts from
+  the raw JSON.
+- **Testing against synthetic fixtures** hid the self-healing blocker. Real artifacts only, now.
+- **Overwriting a local `.env` without checking it first** while testing a config guard.
+- **A curated screenshot taken mid-animation**: the chart data was already right, the drawing
+  wasn't. Screenshots now wait for the drawing to settle.
+- **Replay isn't perfectly stable on a live site.** Recorded prompts include the live
+  accessibility snapshot, which varies slightly, so Broken 1 reports "prompt changed since
+  recording". The outcome is the same, and the report says so instead of hiding it.
+
+The entries below are the full log, milestone by milestone.
+
 ## Milestone 0: research and recon
 
 | Type | What happened                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -74,7 +114,7 @@ Entry types: ✅ helped · ❌ AI was wrong (and how it was caught) · 🔍 foun
 | ✅   | Definitions were written before any SQL (`sql/README.md`): 10% of the _original_ amount, inclusive; inclusive 24h, return strictly after the original; streaks over consecutive _appearances_ (primary) or consecutive _team matches played_ (alternative).                                                                                                                                                          |
 | ✅   | **One dataset for API and SQL.** Scenario 2's `seed.sql` is generated from `api/data/*.json` plus hand-curated `innings.json`. A test fails if the committed seed drifts from its sources.                                                                                                                                                                                                                           |
 | ✅   | **Expected rows were hand-derived before the queries ran,** and all 6 SQL result sets matched on the first run. Edge cases sit on real fixtures from the shared data, including the 2024 washout (match 19) that forced a precise rule for "a match played".                                                                                                                                                         |
-| ✅   | **Mutation checks are automated, not one-off.** 11 tests (13 after the review below added three) mutate a query (`<=` → `<`, 10% → 11%, 24h → 25h, `>= 30` → `> 30` / `>= 29`, dropping the season or abandoned filter) and assert the result changes in exactly the expected way. That proves every seeded boundary is load-bearing.                                                                                |
+| ✅   | **Mutation checks are automated, not one-off.** 11 tests (14 by M7: three added by the review below, one by the pre-run review) mutate a query (`<=` → `<`, 10% → 11%, 24h → 25h, `>= 30` → `> 30` / `>= 29`, dropping the season or abandoned filter) and assert the result changes in exactly the expected way. That proves every seeded boundary is load-bearing.                                                 |
 | ❌   | **A design choice I corrected before coding.** I first planned to decide whether a fixture was "played" by checking whether batting rows exist. That makes the answer depend on how complete the seed is, so it became an explicit `abandoned` flag instead.                                                                                                                                                         |
 | ✅   | PGlite runs the real PostgreSQL engine in-process (no install). DATE/TIMESTAMP/NUMERIC are read as raw text, so the expected rows compare exactly what psql prints, with no JS Date time-zone shifts and no float conversion of money.                                                                                                                                                                               |
 | 🔍   | **Weak mutants.** The evaluator found that most scenario-2 mutants only asserted that something was _absent_, so a mutant that broke the query some other way could pass for the wrong reason. Every mutant now asserts its full result, hand-derived from the seed. Three mutants were added: the return direction (3-party cycle), the LAG/LEAD "previous < 30" guard, and filtering the season _after_ numbering. |
@@ -95,7 +135,7 @@ Entry types: ✅ helped · ❌ AI was wrong (and how it was caught) · 🔍 foun
 | ❌   | **The same escaping mistake, a third time.** I edited TypeScript containing regexes through a Python heredoc again, and `\r`, `\n` and `\b` became control characters. Caught by the byte check (`cat -A`) before running. Code edits now go only through the file tools.                                                                                                                                                                                                                                                                                                                                                             |
 | ❌   | `no-unsafe-finally`: my first `withPatch` threw inside `finally`, which would have hidden the original error. Restructured so restore and verify run on both paths.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ⚠️   | Headless Claude Code reported `OAuth session expired`: the live model run waits for the developer to log in again (`claude auth login`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| ✅   | **Live run with Claude Sonnet 5.5 via headless Claude Code** (no API key; no tools, no MCP servers, schema-constrained output). 6 failures: 4 fixes proposed and re-run 3/3, the control refused before any model call, 1 handed to a human. Responses are recorded as cassettes, and replay reproduces the outcome exactly.                                                                                                                                                                                                                                                                                                          |
+| ✅   | **Live run with Claude Sonnet 5.5 via headless Claude Code** (no API key; no tools, no MCP servers, schema-constrained output). 6 failures: 4 fixes proposed and re-run 3/3, the control refused before any model call, 1 handed to a human. Responses are recorded as cassettes, and replay reproduces the outcome (the live page varies slightly, so Broken 1 is flagged "prompt changed since recording", with the same result).                                                                                                                                                                                                   |
 | ❌🔍 | **The healer accepted a circular locator, and I caught it reviewing the report.** `getByText('₹44,986')` passed unique, visible, role and re-run ×3, but it finds the EMI by the value the test asserts, so a wrong EMI would look like a locator failure. A new **stability gate** (numbers are data, not identity) rejects it. Broken 4 now correctly ends at "needs a human" (the right id isn't in the accessibility snapshot).                                                                                                                                                                                                   |
 | ✅   | A bounded feedback round (gate results back to the model once) fixed Broken 5: round 1 omitted `exact: true` and matched 3 headings; round 2 was correct.                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | ❌   | First live call: Claude Code's `--json-schema` rejected zod's default 2020-12 meta-schema URI. The schema is now emitted as draft-07 without `$schema`. Console output also mislabelled never-run candidates as `rerun:FAIL`; there is now a distinct `skipped` state.                                                                                                                                                                                                                                                                                                                                                                |
