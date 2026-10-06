@@ -6,6 +6,17 @@ export interface SliderRange {
   step: number;
 }
 
+export interface SliderMove {
+  target: number;
+  /** The bound input's value right after the mouse drag, before any keyboard nudge. */
+  afterDrag: number;
+  /** Arrow-key presses needed to reach the target exactly. */
+  nudgeSteps: number;
+}
+
+/** Pixel rounding leaves a drag at most a step or two off; more means the drag didn't work. */
+const MAX_NUDGE_STEPS = 3;
+
 /**
  * A jQuery UI slider bound to a text input (amount / interest / tenure).
  *
@@ -33,13 +44,26 @@ export class SliderControl {
     this.handle = this.track.locator('.ui-slider-handle');
   }
 
-  async setValue(target: number, range: SliderRange, expectedDisplay: string): Promise<void> {
+  /**
+   * Returns what the drag achieved, so the report can show the slider really moved: the value
+   * the input showed right after the drag, and how many keyboard steps closed the gap. A drag
+   * that lands more than MAX_NUDGE_STEPS away fails, so the keyboard can't silently do the work
+   * of a drag that didn't happen (e.g. a mousedown swallowed by an overlay).
+   */
+  async setValue(target: number, range: SliderRange, expectedDisplay: string): Promise<SliderMove> {
     if (target < range.min || target > range.max) {
       throw new RangeError(`target ${target} outside slider range ${range.min}..${range.max}`);
     }
     await this.dragTo(target, range);
+    const afterDrag = this.parse(await this.boundInput.inputValue());
+    const nudgeSteps = Math.round(Math.abs(target - afterDrag) / range.step);
+    expect(
+      nudgeSteps,
+      `drag landed on ${afterDrag}, ${nudgeSteps} steps from ${target}: the drag did not work`,
+    ).toBeLessThanOrEqual(MAX_NUDGE_STEPS);
     await this.nudgeTo(target, range.step);
     await expect(this.boundInput).toHaveValue(expectedDisplay);
+    return { target, afterDrag, nudgeSteps };
   }
 
   private async dragTo(target: number, { min, max }: SliderRange): Promise<void> {

@@ -4,7 +4,7 @@ import { LoanForm, type LoanFormValues } from './components/LoanForm';
 import { PieChart } from './components/PieChart';
 import { BarChart } from './components/BarChart';
 import { MonthPicker } from './components/MonthPicker';
-import { SliderControl, type SliderRange } from './components/SliderControl';
+import { SliderControl, type SliderMove, type SliderRange } from './components/SliderControl';
 import { formatInr, parseInr } from '../support/inr';
 
 /**
@@ -100,7 +100,10 @@ export class EmiCalculatorPage extends BasePage {
    * Sets amount, interest and tenure by interacting with the three sliders (drag + keyboard),
    * as TC2 requires, instead of typing into the inputs.
    */
-  async setWithSliders(type: LoanType, values: LoanFormValues): Promise<void> {
+  async setWithSliders(
+    type: LoanType,
+    values: LoanFormValues,
+  ): Promise<{ amount: SliderMove; interest: SliderMove; tenure: SliderMove }> {
     const ranges = SLIDER_RANGES[type];
     if (!ranges) throw new Error(`No measured slider ranges for "${type}"`);
     const { form } = this;
@@ -109,9 +112,15 @@ export class EmiCalculatorPage extends BasePage {
     const tenure = new SliderControl(this.page, 'loantermslider', form.tenure, Number);
 
     await expect(form.tenureInYears).toBeChecked();
-    await amount.setValue(values.principal, ranges.amount, formatInr(values.principal));
-    await interest.setValue(values.annualRatePct, ranges.interest, String(values.annualRatePct));
-    await tenure.setValue(values.years, ranges.tenureYears, String(values.years));
+    return {
+      amount: await amount.setValue(values.principal, ranges.amount, formatInr(values.principal)),
+      interest: await interest.setValue(
+        values.annualRatePct,
+        ranges.interest,
+        String(values.annualRatePct),
+      ),
+      tenure: await tenure.setValue(values.years, ranges.tenureYears, String(values.years)),
+    };
   }
 
   /**

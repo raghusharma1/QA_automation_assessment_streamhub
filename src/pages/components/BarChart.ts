@@ -127,7 +127,8 @@ export class BarChart {
       attempts += 1;
       const bar = await this.barFor(year, series);
       await this.page.mouse.move(0, 0); // leave the chart so the next hover is a fresh entry
-      await bar.hover();
+      // Short timeout: one hover stuck on actionability must not use up the whole retry budget.
+      await bar.hover({ timeout: 3_000 });
       await expect(this.tooltip).toContainText(`Year : ${year}${series}`, { timeout: 2_000 });
     }).toPass({ timeout: 15_000 });
     return attempts;

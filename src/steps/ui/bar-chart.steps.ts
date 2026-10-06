@@ -87,9 +87,19 @@ Then(
       body: await chart.container.screenshot(),
       contentType: 'image/png',
     });
+    // Measured on the page (the assertions above already passed); the expected value is kept
+    // separately so the evidence shows a count, not the Examples table echoed back.
+    const segments = await chart.barSegments.count();
     await $testInfo.attach('bar-count.json', {
       body: JSON.stringify(
-        { yearlyBars: expectedYears, stackedSegments: await chart.barSegments.count() },
+        {
+          measured: {
+            yearLabels: await chart.yearLabels.count(),
+            stackedSegments: segments,
+            yearlyBars: segments / 2,
+          },
+          expected: { yearlyBars: expectedYears },
+        },
         null,
         2,
       ),

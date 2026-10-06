@@ -11,7 +11,9 @@ async function waitForPieOfEnteredLoan(emiPage: EmiCalculatorPage, ctx: Scenario
   ]);
 }
 
-Then('the pie chart is visible with {int} sections', async ({ emiPage }, sections: number) => {
+Then('the pie chart is visible with {int} sections', async ({ emiPage, ctx }, sections: number) => {
+  // Wait for the pie of THIS loan first: the default chart also has 2 visible slices.
+  await waitForPieOfEnteredLoan(emiPage, ctx);
   const pie = emiPage.pieChart;
   await expect(pie.svg).toBeVisible();
   await expect(pie.slices).toHaveCount(sections);
