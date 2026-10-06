@@ -21,7 +21,7 @@ JOIN transactions r
   AND r.created_at   <= o.created_at + INTERVAL '24 hours'     -- at most exactly 24h later
 WHERE o.from_account <> o.to_account                           -- ignore self-transfers
   AND ABS(r.amount - o.amount) <= 0.10 * o.amount              -- within 10% of the original
-ORDER BY o.created_at, r.created_at;
+ORDER BY o.created_at, r.created_at, o.txn_id, r.txn_id;  -- txn ids: a total order
  original_txn_id | account_a | account_b | original_amount |     original_at     | return_txn_id | return_amount |      return_at      | pct_diff | gap_hours 
 -----------------+-----------+-----------+-----------------+---------------------+---------------+---------------+---------------------+----------+-----------
                1 | ACC001    | ACC002    |         1000.00 | 2024-03-01 09:00:00 |             2 |        950.00 | 2024-03-01 15:30:00 |    -5.00 |      6.50

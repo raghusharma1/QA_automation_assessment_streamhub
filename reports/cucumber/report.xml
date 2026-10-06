@@ -1,0 +1,684 @@
+<?xml version="1.0"?>
+<testsuite name="streamhub-qa" time="53.316931884" tests="105" skipped="0" failures="0" errors="0" timestamp="2026-10-06T10:14:03.512Z">
+  <testcase classname="Matches endpoint" name="The season parameter is required" time="0.225">
+    <system-out><![CDATA[When I request the matches list.............................................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "season" with code "missing" and message "season is required"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="All matches of a season" time="0.315">
+    <system-out><![CDATA[When I request the matches list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "match list" contract..........................passed
+And the page metadata reports 24 results in total...........................passed
+And every match satisfies season "2024".....................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="A valid season without data returns an empty list" time="0.502">
+    <system-out><![CDATA[When I request the matches list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "match list" contract..........................passed
+And the response contains 0 items...........................................passed
+And the page metadata reports 0 results in total............................passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Filter matches: &lt;param>=&lt;value> - #1.1: Filter matches: team=KKR" time="0.139">
+    <system-out><![CDATA[When I request the matches list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "match list" contract..........................passed
+And the page metadata reports 7 results in total............................passed
+And the response contains 7 items...........................................passed
+And every match satisfies team "KKR"........................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Filter matches: &lt;param>=&lt;value> - #1.2: Filter matches: stage=LEAGUE" time="0.195">
+    <system-out><![CDATA[When I request the matches list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "match list" contract..........................passed
+And the page metadata reports 20 results in total...........................passed
+And the response contains 20 items..........................................passed
+And every match satisfies stage "LEAGUE"....................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Filter matches: &lt;param>=&lt;value> - #1.3: Filter matches: stage=FINAL" time="0.076">
+    <system-out><![CDATA[When I request the matches list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "match list" contract..........................passed
+And the page metadata reports 1 results in total............................passed
+And the response contains 1 items...........................................passed
+And every match satisfies stage "FINAL".....................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Filter matches: &lt;param>=&lt;value> - #1.4: Filter matches: from=2024-05-01" time="0.168">
+    <system-out><![CDATA[When I request the matches list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "match list" contract..........................passed
+And the page metadata reports 9 results in total............................passed
+And the response contains 9 items...........................................passed
+And every match satisfies from "2024-05-01".................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Filter matches: &lt;param>=&lt;value> - #1.5: Filter matches: to=2024-03-30" time="0.092">
+    <system-out><![CDATA[When I request the matches list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "match list" contract..........................passed
+And the page metadata reports 7 results in total............................passed
+And the response contains 7 items...........................................passed
+And every match satisfies to "2024-03-30"...................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Paging through a season in reverse date order" time="0.089">
+    <system-out><![CDATA[When I request the matches list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "match list" contract..........................passed
+And the page metadata is page 2 of 5 with limit 5 and 24 results in total...passed
+And the item ids are, in order: "19, 18, 17, 16, 15"........................passed
+And the items are ordered by "date" descending..............................passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Sort by id, descending" time="0.081">
+    <system-out><![CDATA[When I request the matches list with:.......................................passed
+Then the response status is 200.............................................passed
+And the item ids are, in order: "24, 23, 22"................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Date window, team and sort combined" time="0.114">
+    <system-out><![CDATA[When I request the matches list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "match list" contract..........................passed
+And the item ids are, in order: "21, 19, 17"................................passed
+And the items are ordered by "date" descending..............................passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Invalid match queries are rejected: &lt;query> - #1.1: Invalid match queries are rejected: limit=5" time="0.066">
+    <system-out><![CDATA[When I send a GET request to "api/matches?limit=5"..........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "season" with code "missing" and message "season is required"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Invalid match queries are rejected: &lt;query> - #1.2: Invalid match queries are rejected: season=abc" time="0.04">
+    <system-out><![CDATA[When I send a GET request to "api/matches?season=abc".......................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "season" with code "invalid" and message "season must be an integer between 2008 and 2024"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Invalid match queries are rejected: &lt;query> - #1.3: Invalid match queries are rejected: season=2007" time="0.045">
+    <system-out><![CDATA[When I send a GET request to "api/matches?season=2007"......................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "season" with code "invalid" and message "season must be an integer between 2008 and 2024"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Invalid match queries are rejected: &lt;query> - #1.4: Invalid match queries are rejected: season=2030" time="0.033">
+    <system-out><![CDATA[When I send a GET request to "api/matches?season=2030"......................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "season" with code "invalid" and message "season must be an integer between 2008 and 2024"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Invalid match queries are rejected: &lt;query> - #1.5: Invalid match queries are rejected: season=2024&amp;stage=SEMI_FINAL" time="0.028">
+    <system-out><![CDATA[When I send a GET request to "api/matches?season=2024&stage=SEMI_FINAL".....passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "stage" with code "invalid" and message "stage must be one of: LEAGUE, QUALIFIER_1, ELIMINATOR, QUALIFIER_2, FINAL"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Invalid match queries are rejected: &lt;query> - #1.6: Invalid match queries are rejected: season=2024&amp;from=2024-05-30&amp;to=2024-05-01" time="0.043">
+    <system-out><![CDATA[When I send a GET request to "api/matches?season=2024&from=2024-05-30&to=2024-05-01"..passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "from" with code "invalid" and message "from must be on or before to"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Invalid match queries are rejected: &lt;query> - #1.7: Invalid match queries are rejected: season=2024&amp;from=2024-02-30" time="0.032">
+    <system-out><![CDATA[When I send a GET request to "api/matches?season=2024&from=2024-02-30"......passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "from" with code "invalid" and message "from must be a real calendar date"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Invalid match queries are rejected: &lt;query> - #1.8: Invalid match queries are rejected: season=2024&amp;to=26-05-2024" time="0.043">
+    <system-out><![CDATA[When I send a GET request to "api/matches?season=2024&to=26-05-2024"........passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "to" with code "invalid" and message "to must be a date in YYYY-MM-DD format"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Invalid match queries are rejected: &lt;query> - #1.9: Invalid match queries are rejected: season=2024&amp;sort=venue" time="0.025">
+    <system-out><![CDATA[When I send a GET request to "api/matches?season=2024&sort=venue"...........passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "sort" with code "invalid" and message "sort must be a comma-separated list of: date, id (prefix with - for descending)"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Invalid match queries are rejected: &lt;query> - #1.10: Invalid match queries are rejected: season=2024&amp;year=2024" time="0.022">
+    <system-out><![CDATA[When I send a GET request to "api/matches?season=2024&year=2024"............passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "year" with code "unknown_parameter" and message "year is not a supported parameter"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Invalid match queries are rejected: &lt;query> - #1.11: Invalid match queries are rejected: season=2024&amp;team=XYZ" time="0.03">
+    <system-out><![CDATA[When I send a GET request to "api/matches?season=2024&team=XYZ".............passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "team" with code "invalid" and message "team must be one of: CSK, DC, GT, KKR, LSG, MI, PBKS, RR, RCB, SRH"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Invalid match queries are rejected: &lt;query> - #1.12: Invalid match queries are rejected: season=2024&amp;limit=0" time="0.033">
+    <system-out><![CDATA[When I send a GET request to "api/matches?season=2024&limit=0"..............passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "limit" with code "invalid" and message "limit must be an integer between 1 and 100"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="Invalid match queries are rejected: &lt;query> - #1.13: Invalid match queries are rejected: season=2024&amp;page=0" time="0.033">
+    <system-out><![CDATA[When I send a GET request to "api/matches?season=2024&page=0"...............passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "page" with code "invalid" and message "page must be an integer between 1 and 10000"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Matches endpoint" name="A malformed date gets one error, not follow-on calendar and range errors" time="0.209">
+    <system-out><![CDATA[When I send a GET request to "api/matches?season=2024&from=bad&to=2024-04-01"..passed
+Then the response status is 400.............................................passed
+And the problem lists exactly these errors:.................................passed
+And the problem lists only an error for "from" with code "invalid" and message "from must be a date in YYYY-MM-DD format"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Default pagination" time="0.045">
+    <system-out><![CDATA[When I request the players list.............................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the page metadata is page 1 of 4 with limit 10 and 36 results in total..passed
+And the response contains 10 items..........................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Filter and search: &lt;param>=&lt;value> - #1.1: Filter and search: team=MI" time="0.047">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the page metadata reports 5 results in total............................passed
+And the response contains 5 items...........................................passed
+And every player satisfies team "MI"........................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Filter and search: &lt;param>=&lt;value> - #1.2: Filter and search: role=BOWLER" time="0.047">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the page metadata reports 6 results in total............................passed
+And the response contains 6 items...........................................passed
+And every player satisfies role "BOWLER"....................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Filter and search: &lt;param>=&lt;value> - #1.3: Filter and search: q=sharma" time="0.033">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the page metadata reports 2 results in total............................passed
+And the response contains 2 items...........................................passed
+And every player satisfies q "sharma".......................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Filter and search: &lt;param>=&lt;value> - #1.4: Filter and search: q=KOHLI" time="0.053">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the page metadata reports 1 results in total............................passed
+And the response contains 1 items...........................................passed
+And every player satisfies q "KOHLI"........................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Filter and search: &lt;param>=&lt;value> - #1.5: Filter and search: minRuns=500" time="0.051">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the page metadata reports 7 results in total............................passed
+And the response contains 7 items...........................................passed
+And every player satisfies minRuns "500"....................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Filter and search: &lt;param>=&lt;value> - #1.6: Filter and search: maxRuns=100" time="0.055">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the page metadata reports 5 results in total............................passed
+And the response contains 5 items...........................................passed
+And every player satisfies maxRuns "100"....................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Combined filters, sorting and a run range" time="0.051">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the item names are, in order: "Sunil Narine"............................passed
+And every player satisfies team "KKR".......................................passed
+And every player satisfies role "ALL_ROUNDER"...............................passed
+And every player satisfies minRuns "300"....................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Sorting by &lt;sort> - #1.1: Sorting by name" time="0.066">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the items are ordered by "name" ascending...............................passed
+And the first item is "Abhishek Sharma".....................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Sorting by &lt;sort> - #1.2: Sorting by -name" time="0.065">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the items are ordered by "name" descending..............................passed
+And the first item is "Yuzvendra Chahal"....................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Sorting by &lt;sort> - #1.3: Sorting by runs" time="0.058">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the items are ordered by "runs" ascending...............................passed
+And the first item is "Varun Chakravarthy"..................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Sorting by &lt;sort> - #1.4: Sorting by -runs" time="0.059">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the items are ordered by "runs" descending..............................passed
+And the first item is "Virat Kohli".........................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Sorting by &lt;sort> - #1.5: Sorting by wickets" time="0.072">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the items are ordered by "wickets" ascending............................passed
+And the first item is "Virat Kohli".........................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Sorting by &lt;sort> - #1.6: Sorting by -wickets" time="0.058">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the items are ordered by "wickets" descending...........................passed
+And the first item is "Harshal Patel".......................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Sorting by &lt;sort> - #1.7: Sorting by matches" time="0.056">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the items are ordered by "matches" ascending............................passed
+And the first item is "Jake Fraser-McGurk"..................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Sorting by &lt;sort> - #1.8: Sorting by -matches" time="0.058">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the items are ordered by "matches" descending...........................passed
+And the first item is "Abhishek Sharma".....................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Sorting by &lt;sort> - #1.9: Sorting by strikeRate" time="0.046">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the items are ordered by "strikeRate" ascending.........................passed
+And the first item is "Varun Chakravarthy"..................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Sorting by &lt;sort> - #1.10: Sorting by -strikeRate" time="0.053">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the items are ordered by "strikeRate" descending........................passed
+And the first item is "Jake Fraser-McGurk"..................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Multi-key sort breaks ties on the second key (&lt;sort>) - #1.1: Multi-key sort breaks ties on the second key (-runs,name)" time="0.026">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the item names are, in order: "Phil Salt, Yashasvi Jaiswal".............passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Multi-key sort breaks ties on the second key (&lt;sort>) - #1.2: Multi-key sort breaks ties on the second key (-runs,-name)" time="0.021">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the item names are, in order: "Yashasvi Jaiswal, Phil Salt".............passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Ties are broken by id" time="0.025">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the item ids are, in order: "1, 2, 3, 5, 6".............................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Second page and page size" time="0.027">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the page metadata is page 2 of 8 with limit 5 and 36 results in total...passed
+And the item ids are, in order: "28, 30, 31, 14, 20"........................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="A page past the end is valid and empty" time="0.035">
+    <system-out><![CDATA[When I request the players list with:.......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player list" contract.........................passed
+And the response contains 0 items...........................................passed
+And the page metadata is page 99 of 4 with limit 10 and 36 results in total..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Get one player by id" time="0.034">
+    <system-out><![CDATA[When I request the player with id "1".......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "player" contract..............................passed
+And the response body is exactly:...........................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Player id &lt;id> returns &lt;status> - #1.1: Player id 999 returns 404" time="0.027">
+    <system-out><![CDATA[When I request the player with id "999".....................................passed
+Then the response status is 404.............................................passed
+And the response is a problem document with title "Not Found"...............passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="A malformed player id is rejected: &lt;id> - #1.1: A malformed player id is rejected: abc" time="0.037">
+    <system-out><![CDATA[When I request the player with id "abc".....................................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "id" with code "invalid" and message "id must be a positive integer of at most 9 digits, without leading zeros"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="A malformed player id is rejected: &lt;id> - #1.2: A malformed player id is rejected: 0" time="0.037">
+    <system-out><![CDATA[When I request the player with id "0".......................................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "id" with code "invalid" and message "id must be a positive integer of at most 9 digits, without leading zeros"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="A malformed player id is rejected: &lt;id> - #1.3: A malformed player id is rejected: -1" time="0.061">
+    <system-out><![CDATA[When I request the player with id "-1"......................................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "id" with code "invalid" and message "id must be a positive integer of at most 9 digits, without leading zeros"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="A malformed player id is rejected: &lt;id> - #1.4: A malformed player id is rejected: 0001" time="0.055">
+    <system-out><![CDATA[When I request the player with id "0001"....................................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "id" with code "invalid" and message "id must be a positive integer of at most 9 digits, without leading zeros"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="A malformed player id is rejected: &lt;id> - #1.5: A malformed player id is rejected: 1234567890" time="0.06">
+    <system-out><![CDATA[When I request the player with id "1234567890"..............................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "id" with code "invalid" and message "id must be a positive integer of at most 9 digits, without leading zeros"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.1: Invalid query parameters are rejected: limit=0" time="0.071">
+    <system-out><![CDATA[When I send a GET request to "api/players?limit=0"..........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "limit" with code "invalid" and message "limit must be an integer between 1 and 100"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.2: Invalid query parameters are rejected: limit=101" time="0.022">
+    <system-out><![CDATA[When I send a GET request to "api/players?limit=101"........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "limit" with code "invalid" and message "limit must be an integer between 1 and 100"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.3: Invalid query parameters are rejected: limit=abc" time="0.028">
+    <system-out><![CDATA[When I send a GET request to "api/players?limit=abc"........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "limit" with code "invalid" and message "limit must be an integer between 1 and 100"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.4: Invalid query parameters are rejected: limit=1e2" time="0.031">
+    <system-out><![CDATA[When I send a GET request to "api/players?limit=1e2"........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "limit" with code "invalid" and message "limit must be an integer between 1 and 100"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.5: Invalid query parameters are rejected: limit=" time="0.032">
+    <system-out><![CDATA[When I send a GET request to "api/players?limit="...........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "limit" with code "invalid" and message "limit must be an integer between 1 and 100"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.6: Invalid query parameters are rejected: limit=1&amp;limit=2" time="0.023">
+    <system-out><![CDATA[When I send a GET request to "api/players?limit=1&limit=2"..................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "limit" with code "invalid" and message "limit must be an integer between 1 and 100"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.7: Invalid query parameters are rejected: page=0" time="0.032">
+    <system-out><![CDATA[When I send a GET request to "api/players?page=0"...........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "page" with code "invalid" and message "page must be an integer between 1 and 10000"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.8: Invalid query parameters are rejected: page=1.5" time="0.031">
+    <system-out><![CDATA[When I send a GET request to "api/players?page=1.5".........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "page" with code "invalid" and message "page must be an integer between 1 and 10000"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.9: Invalid query parameters are rejected: team=XYZ" time="0.025">
+    <system-out><![CDATA[When I send a GET request to "api/players?team=XYZ".........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "team" with code "invalid" and message "team must be one of: CSK, DC, GT, KKR, LSG, MI, PBKS, RR, RCB, SRH"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.10: Invalid query parameters are rejected: role=CAPTAIN" time="0.021">
+    <system-out><![CDATA[When I send a GET request to "api/players?role=CAPTAIN".....................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "role" with code "invalid" and message "role must be one of: BATTER, BOWLER, ALL_ROUNDER, WICKET_KEEPER"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.11: Invalid query parameters are rejected: q=a" time="0.028">
+    <system-out><![CDATA[When I send a GET request to "api/players?q=a"..............................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "q" with code "invalid" and message "q must be a search term of 2 to 50 characters"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.12: Invalid query parameters are rejected: minRuns=500&amp;maxRuns=100" time="0.028">
+    <system-out><![CDATA[When I send a GET request to "api/players?minRuns=500&maxRuns=100"..........passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "minRuns" with code "invalid" and message "minRuns must be less than or equal to maxRuns"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.13: Invalid query parameters are rejected: minRuns=-5" time="0.026">
+    <system-out><![CDATA[When I send a GET request to "api/players?minRuns=-5".......................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "minRuns" with code "invalid" and message "minRuns must be an integer between 0 and 100000"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.14: Invalid query parameters are rejected: sort=age" time="0.02">
+    <system-out><![CDATA[When I send a GET request to "api/players?sort=age".........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "sort" with code "invalid" and message "sort must be a comma-separated list of: name, runs, wickets, matches, strikeRate (prefix with - for descending)"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.15: Invalid query parameters are rejected: foo=1" time="0.028">
+    <system-out><![CDATA[When I send a GET request to "api/players?foo=1"............................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "foo" with code "unknown_parameter" and message "foo is not a supported parameter"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.16: Invalid query parameters are rejected: tem=MI" time="0.025">
+    <system-out><![CDATA[When I send a GET request to "api/players?tem=MI"...........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "tem" with code "unknown_parameter" and message "tem is not a supported parameter"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.17: Invalid query parameters are rejected: team=mi" time="0.022">
+    <system-out><![CDATA[When I send a GET request to "api/players?team=mi"..........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "team" with code "invalid" and message "team must be one of: CSK, DC, GT, KKR, LSG, MI, PBKS, RR, RCB, SRH"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.18: Invalid query parameters are rejected: maxRuns=abc" time="0.026">
+    <system-out><![CDATA[When I send a GET request to "api/players?maxRuns=abc"......................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "maxRuns" with code "invalid" and message "maxRuns must be an integer between 0 and 100000"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.19: Invalid query parameters are rejected: maxRuns=100001" time="0.025">
+    <system-out><![CDATA[When I send a GET request to "api/players?maxRuns=100001"...................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "maxRuns" with code "invalid" and message "maxRuns must be an integer between 0 and 100000"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.20: Invalid query parameters are rejected: minRuns=100001" time="0.027">
+    <system-out><![CDATA[When I send a GET request to "api/players?minRuns=100001"...................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "minRuns" with code "invalid" and message "minRuns must be an integer between 0 and 100000"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.21: Invalid query parameters are rejected: page=10001" time="0.02">
+    <system-out><![CDATA[When I send a GET request to "api/players?page=10001".......................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "page" with code "invalid" and message "page must be an integer between 1 and 10000"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.22: Invalid query parameters are rejected: q=%20a%20" time="0.022">
+    <system-out><![CDATA[When I send a GET request to "api/players?q=%20a%20"........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "q" with code "invalid" and message "q must be a search term of 2 to 50 characters"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.23: Invalid query parameters are rejected: q=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" time="0.028">
+    <system-out><![CDATA[When I send a GET request to "api/players?q=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"..passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "q" with code "invalid" and message "q must be a search term of 2 to 50 characters"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.24: Invalid query parameters are rejected: sort=" time="0.031">
+    <system-out><![CDATA[When I send a GET request to "api/players?sort="............................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "sort" with code "invalid" and message "sort must be a comma-separated list of: name, runs, wickets, matches, strikeRate (prefix with - for descending)"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Invalid query parameters are rejected: &lt;query> - #1.25: Invalid query parameters are rejected: sort=-" time="0.027">
+    <system-out><![CDATA[When I send a GET request to "api/players?sort=-"...........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists only an error for "sort" with code "invalid" and message "sort must be a comma-separated list of: name, runs, wickets, matches, strikeRate (prefix with - for descending)"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="An invalid run bound gets one error, not a follow-on range error" time="0.025">
+    <system-out><![CDATA[When I send a GET request to "api/players?minRuns=abc&maxRuns=1"............passed
+Then the response status is 400.............................................passed
+And the problem lists exactly these errors:.................................passed
+And the problem lists only an error for "minRuns" with code "invalid" and message "minRuns must be an integer between 0 and 100000"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="A number too long for JavaScript still gets the API's own message" time="0.028">
+    <system-out><![CDATA[When I send a GET request to "api/players" with "limit" set to a 400-digit number..passed
+Then the response status is 400.............................................passed
+And the problem lists only an error for "limit" with code "invalid" and message "limit must be an integer between 1 and 100"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Players endpoint" name="Every invalid parameter is reported at once" time="0.027">
+    <system-out><![CDATA[When I send a GET request to "api/players?limit=0&team=XYZ&foo=1"...........passed
+Then the response status is 400.............................................passed
+And the problem lists exactly these errors:.................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Health, routing and method handling" name="Health check" time="0.032">
+    <system-out><![CDATA[When I send a GET request to "health".......................................passed
+Then the response status is 200.............................................passed
+And the response matches the "health" contract..............................passed]]></system-out>
+  </testcase>
+  <testcase classname="Health, routing and method handling" name="Endpoints without query parameters still reject unknown ones: &lt;path> - #1.1: Endpoints without query parameters still reject unknown ones: health" time="0.026">
+    <system-out><![CDATA[When I send a GET request to "health?foo=1".................................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists an error for "foo" with code "unknown_parameter"......passed]]></system-out>
+  </testcase>
+  <testcase classname="Health, routing and method handling" name="Endpoints without query parameters still reject unknown ones: &lt;path> - #1.2: Endpoints without query parameters still reject unknown ones: api/players/1" time="0.034">
+    <system-out><![CDATA[When I send a GET request to "api/players/1?foo=1"..........................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists an error for "foo" with code "unknown_parameter"......passed]]></system-out>
+  </testcase>
+  <testcase classname="Health, routing and method handling" name="Unknown route" time="0.024">
+    <system-out><![CDATA[When I send a GET request to "api/nope".....................................passed
+Then the response status is 404.............................................passed
+And the response is a problem document with title "Not Found"...............passed]]></system-out>
+  </testcase>
+  <testcase classname="Health, routing and method handling" name="Unsupported methods on known paths are rejected with 405 - #1.1" time="0.037">
+    <system-out><![CDATA[When I send a POST request to "api/players".................................passed
+Then the response status is 405.............................................passed
+And the response header "allow" is "GET, HEAD"..............................passed
+And the response is a problem document with title "Method Not Allowed"......passed]]></system-out>
+  </testcase>
+  <testcase classname="Health, routing and method handling" name="Unsupported methods on known paths are rejected with 405 - #1.2" time="0.023">
+    <system-out><![CDATA[When I send a PUT request to "api/players/1"................................passed
+Then the response status is 405.............................................passed
+And the response header "allow" is "GET, HEAD"..............................passed
+And the response is a problem document with title "Method Not Allowed"......passed]]></system-out>
+  </testcase>
+  <testcase classname="Health, routing and method handling" name="Unsupported methods on known paths are rejected with 405 - #1.3" time="0.028">
+    <system-out><![CDATA[When I send a DELETE request to "api/players/1".............................passed
+Then the response status is 405.............................................passed
+And the response header "allow" is "GET, HEAD"..............................passed
+And the response is a problem document with title "Method Not Allowed"......passed]]></system-out>
+  </testcase>
+  <testcase classname="Health, routing and method handling" name="Unsupported methods on known paths are rejected with 405 - #1.4" time="0.022">
+    <system-out><![CDATA[When I send a PATCH request to "api/teams"..................................passed
+Then the response status is 405.............................................passed
+And the response header "allow" is "GET, HEAD"..............................passed
+And the response is a problem document with title "Method Not Allowed"......passed]]></system-out>
+  </testcase>
+  <testcase classname="Health, routing and method handling" name="Unsupported methods on known paths are rejected with 405 - #1.5" time="0.021">
+    <system-out><![CDATA[When I send a POST request to "api/matches".................................passed
+Then the response status is 405.............................................passed
+And the response header "allow" is "GET, HEAD"..............................passed
+And the response is a problem document with title "Method Not Allowed"......passed]]></system-out>
+  </testcase>
+  <testcase classname="Health, routing and method handling" name="Unsupported methods on known paths are rejected with 405 - #1.6" time="0.017">
+    <system-out><![CDATA[When I send a POST request to "health"......................................passed
+Then the response status is 405.............................................passed
+And the response header "allow" is "GET, HEAD"..............................passed
+And the response is a problem document with title "Method Not Allowed"......passed]]></system-out>
+  </testcase>
+  <testcase classname="Health, routing and method handling" name="HEAD is served for every GET route, without a body" time="0.027">
+    <system-out><![CDATA[When I send a HEAD request to "api/players".................................passed
+Then the response status is 200.............................................passed
+And the response body is empty..............................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Health, routing and method handling" name="HEAD still validates the query" time="0.018">
+    <system-out><![CDATA[When I send a HEAD request to "api/players?foo=1"...........................passed
+Then the response status is 400.............................................passed
+And the response body is empty..............................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Teams endpoint" name="List all teams" time="0.023">
+    <system-out><![CDATA[When I request the teams list...............................................passed
+Then the response status is 200.............................................passed
+And the response matches the "team list" contract...........................passed
+And the response contains 10 items..........................................passed]]></system-out>
+  </testcase>
+  <testcase classname="Teams endpoint" name="Sort teams by name, descending" time="0.04">
+    <system-out><![CDATA[When I request the teams list with:.........................................passed
+Then the response status is 200.............................................passed
+And the response matches the "team list" contract...........................passed
+And the items are ordered by "name" descending..............................passed
+And the item ids are, in order: "SRH, RCB, RR, PBKS, MI, LSG, KKR, GT, DC, CSK"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Teams endpoint" name="Sort teams by titles (descending), then by name" time="0.054">
+    <system-out><![CDATA[When I request the teams list with:.........................................passed
+Then the response status is 200.............................................passed
+And the response matches the "team list" contract...........................passed
+And the items are ordered by "titles" descending, then by "name" ascending..passed
+And the item ids are, in order: "CSK, MI, KKR, GT, RR, SRH, DC, LSG, PBKS, RCB"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Teams endpoint" name="An unknown parameter is rejected" time="0.034">
+    <system-out><![CDATA[When I send a GET request to "api/teams?foo=1"..............................passed
+Then the response status is 400.............................................passed
+And the problem lists only an error for "foo" with code "unknown_parameter" and message "foo is not a supported parameter"..passed]]></system-out>
+  </testcase>
+  <testcase classname="Teams endpoint" name="An unsortable field is rejected" time="0.04">
+    <system-out><![CDATA[When I request the teams list with:.........................................passed
+Then the response status is 400.............................................passed
+And the response is a problem document with title "Bad Request".............passed
+And the problem lists an error for "sort" with code "invalid"...............passed]]></system-out>
+  </testcase>
+  <testcase classname="EMI calculator availability" name="The calculator dashboard loads with every loan product" time="11.018">
+    <system-out><![CDATA[Given I open the EMI calculator.............................................passed
+Then the EMI calculator dashboard is displayed..............................passed
+And the following loan products are available:..............................passed]]></system-out>
+  </testcase>
+  <testcase classname="Home loan EMI and pie chart breakdown" name="Home loan EMI and pie chart match an independent calculation - #1.1" time="12.916">
+    <system-out><![CDATA[Given I open the EMI calculator.............................................passed
+And I select the "Home Loan" tab............................................passed
+When I enter a loan amount of 25L, an interest rate of 10% and a tenure of 10 years..passed
+Then the displayed EMI matches my independently calculated EMI..............passed
+And the displayed total interest and total payment match my calculation.....passed
+And the pie chart is visible with 2 sections................................passed
+And the pie chart sections match my calculated principal and interest.......passed
+And both pie chart sections show numerical values greater than zero.........passed]]></system-out>
+  </testcase>
+  <testcase classname="Home loan EMI and pie chart breakdown" name="Home loan EMI and pie chart match an independent calculation - #1.2" time="11.548">
+    <system-out><![CDATA[Given I open the EMI calculator.............................................passed
+And I select the "Home Loan" tab............................................passed
+When I enter a loan amount of 50L, an interest rate of 7.5% and a tenure of 15 years..passed
+Then the displayed EMI matches my independently calculated EMI..............passed
+And the displayed total interest and total payment match my calculation.....passed
+And the pie chart is visible with 2 sections................................passed
+And the pie chart sections match my calculated principal and interest.......passed
+And both pie chart sections show numerical values greater than zero.........passed]]></system-out>
+  </testcase>
+  <testcase classname="Personal loan EMI bar chart" name="Bar chart matches an independent amortization schedule - #1.1" time="11.96">
+    <system-out><![CDATA[Given I open the EMI calculator.............................................passed
+And I select the "Personal Loan" tab........................................passed
+When I use the sliders to set a loan amount of 10L, an interest rate of 12% and a tenure of 5 years..passed
+Then the displayed EMI matches my independently calculated EMI..............passed
+When I change the schedule start month to January of next year..............passed
+Then the bar chart is visible...............................................passed
+And the bar chart has one bar per calendar year of the schedule, 5 in total..passed
+And the yearly interest and principal in the bar chart match my amortization schedule..passed
+When I hover over the Interest bar of the second year of the schedule.......passed
+Then the tooltip shows that year's Interest and total payment from my amortization schedule..passed]]></system-out>
+  </testcase>
+  <testcase classname="Personal loan EMI bar chart" name="Bar chart matches an independent amortization schedule - #1.2" time="7.267">
+    <system-out><![CDATA[Given I open the EMI calculator.............................................passed
+And I select the "Personal Loan" tab........................................passed
+When I use the sliders to set a loan amount of 10L, an interest rate of 12% and a tenure of 5 years..passed
+Then the displayed EMI matches my independently calculated EMI..............passed
+When I change the schedule start month to June of next year.................passed
+Then the bar chart is visible...............................................passed
+And the bar chart has one bar per calendar year of the schedule, 6 in total..passed
+And the yearly interest and principal in the bar chart match my amortization schedule..passed
+When I hover over the Principal bar of the second year of the schedule......passed
+Then the tooltip shows that year's Principal and total payment from my amortization schedule..passed]]></system-out>
+  </testcase>
+</testsuite>

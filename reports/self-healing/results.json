@@ -1,0 +1,626 @@
+{
+  "config": {
+    "argv": [
+      "<node>",
+      "<repo>\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "-c",
+      "playwright.self-heal.config.ts"
+    ],
+    "configFile": "<repo>\\playwright.self-heal.config.ts",
+    "rootDir": "<repo>",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "<repo>/reports/self-healing/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "self-healing",
+        "name": "self-healing",
+        "testDir": "<repo>/.features-gen-self-heal",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "reports/self-healing/results.json"
+        }
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "reports/self-healing/html",
+          "open": "never"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 4,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": ".features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js",
+      "file": ".features-gen-self-heal/features/self-healing/broken-locators.feature.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Self-healing exercise: deliberately broken locators",
+          "file": ".features-gen-self-heal/features/self-healing/broken-locators.feature.spec.js",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Broken 1: ambiguous role name (strict-mode violation)",
+              "ok": false,
+              "tags": [
+                "self-healing"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "self-healing",
+                  "projectName": "self-healing",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 1426,
+                      "error": {
+                        "message": "Error: locator.click: Error: strict mode violation: getByRole('link', { name: /Loan/ }) resolved to 13 elements:\n    1) <a href=\"#\" aria-haspopup=\"true\" aria-expanded=\"false\" data-toggle=\"dropdown\" id=\"menu-item-dropdown-2696\" class=\"dropdown-toggle nav-link\" title=\"Loan Calculators & Widgets\">Loan Calculators & Widgets</a> aka getByRole('link', { name: 'Loan Calculators & Widgets' })\n    2) <a href=\"#\">Home Loan</a> aka getByRole('link', { name: 'Home Loan', exact: true })\n    3) <a href=\"#\">Personal Loan</a> aka getByRole('link', { name: 'Personal Loan' })\n    4) <a href=\"#\">Car Loan</a> aka getByRole('link', { name: 'Car Loan' })\n    5) <a href=\"https://emicalculator.net/loan-calculator/\">Loan Calculator — Calculate EMI, Affordability, T…</a> aka locator('#menu-item-3009').getByRole('link', { name: 'Loan Calculator — Calculate' })\n    6) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">Home Loan EMI Calculator with Prepayments, Taxes …</a> aka locator('#menu-item-3293').getByRole('link', { name: 'Home Loan EMI Calculator with' })\n    7) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">Home Loan EMI Calculator with Prepayments</a> aka getByRole('link', { name: 'Home Loan EMI Calculator with Prepayments', exact: true })\n    8) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">↵Home Loan EMI Calculator⇆</a> aka getByRole('link', { name: 'Home Loan EMI Calculator', exact: true })\n    9) <a href=\"https://emicalculator.net/loan-calculator/\">↵Loan Calculator⇆</a> aka getByRole('link', { name: 'Loan Calculator', exact: true })\n    10) <a class=\"title\" href=\"https://emicalculator.net/tax-free-loans-from-employer-how-the-rules-have-changed/\">Tax-Free Loans from Employer: How the Rules Have …</a> aka getByRole('link', { name: 'Tax-Free Loans from Employer' })\n    ...\n\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: /Loan/ })\u001b[22m\n",
+                        "stack": "Error: locator.click: Error: strict mode violation: getByRole('link', { name: /Loan/ }) resolved to 13 elements:\n    1) <a href=\"#\" aria-haspopup=\"true\" aria-expanded=\"false\" data-toggle=\"dropdown\" id=\"menu-item-dropdown-2696\" class=\"dropdown-toggle nav-link\" title=\"Loan Calculators & Widgets\">Loan Calculators & Widgets</a> aka getByRole('link', { name: 'Loan Calculators & Widgets' })\n    2) <a href=\"#\">Home Loan</a> aka getByRole('link', { name: 'Home Loan', exact: true })\n    3) <a href=\"#\">Personal Loan</a> aka getByRole('link', { name: 'Personal Loan' })\n    4) <a href=\"#\">Car Loan</a> aka getByRole('link', { name: 'Car Loan' })\n    5) <a href=\"https://emicalculator.net/loan-calculator/\">Loan Calculator — Calculate EMI, Affordability, T…</a> aka locator('#menu-item-3009').getByRole('link', { name: 'Loan Calculator — Calculate' })\n    6) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">Home Loan EMI Calculator with Prepayments, Taxes …</a> aka locator('#menu-item-3293').getByRole('link', { name: 'Home Loan EMI Calculator with' })\n    7) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">Home Loan EMI Calculator with Prepayments</a> aka getByRole('link', { name: 'Home Loan EMI Calculator with Prepayments', exact: true })\n    8) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">↵Home Loan EMI Calculator⇆</a> aka getByRole('link', { name: 'Home Loan EMI Calculator', exact: true })\n    9) <a href=\"https://emicalculator.net/loan-calculator/\">↵Loan Calculator⇆</a> aka getByRole('link', { name: 'Loan Calculator', exact: true })\n    10) <a class=\"title\" href=\"https://emicalculator.net/tax-free-loans-from-employer-how-the-rules-have-changed/\">Tax-Free Loans from Employer: How the Rules Have …</a> aka getByRole('link', { name: 'Tax-Free Loans from Employer' })\n    ...\n\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: /Loan/ })\u001b[22m\n\n    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:11:36)\n    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:11:5",
+                        "location": {
+                          "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                          "column": 36,
+                          "line": 11
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:11\n\n\u001b[0m \u001b[90m  9 |\u001b[39m\n \u001b[90m 10 |\u001b[39m \u001b[33mWhen\u001b[39m(\u001b[32m'I switch product using the legacy Personal Loan tab locator'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ legacyPage }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m   \u001b[36mawait\u001b[39m legacyPage\u001b[33m.\u001b[39mpersonalLoanTab\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m\n \u001b[90m 14 |\u001b[39m \u001b[33mThen\u001b[39m(\u001b[32m'the {string} tab is the active product'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ emiPage }\u001b[33m,\u001b[39m tab\u001b[33m:\u001b[39m string) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                            "column": 36,
+                            "line": 11
+                          },
+                          "message": "Error: locator.click: Error: strict mode violation: getByRole('link', { name: /Loan/ }) resolved to 13 elements:\n    1) <a href=\"#\" aria-haspopup=\"true\" aria-expanded=\"false\" data-toggle=\"dropdown\" id=\"menu-item-dropdown-2696\" class=\"dropdown-toggle nav-link\" title=\"Loan Calculators & Widgets\">Loan Calculators & Widgets</a> aka getByRole('link', { name: 'Loan Calculators & Widgets' })\n    2) <a href=\"#\">Home Loan</a> aka getByRole('link', { name: 'Home Loan', exact: true })\n    3) <a href=\"#\">Personal Loan</a> aka getByRole('link', { name: 'Personal Loan' })\n    4) <a href=\"#\">Car Loan</a> aka getByRole('link', { name: 'Car Loan' })\n    5) <a href=\"https://emicalculator.net/loan-calculator/\">Loan Calculator — Calculate EMI, Affordability, T…</a> aka locator('#menu-item-3009').getByRole('link', { name: 'Loan Calculator — Calculate' })\n    6) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">Home Loan EMI Calculator with Prepayments, Taxes …</a> aka locator('#menu-item-3293').getByRole('link', { name: 'Home Loan EMI Calculator with' })\n    7) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">Home Loan EMI Calculator with Prepayments</a> aka getByRole('link', { name: 'Home Loan EMI Calculator with Prepayments', exact: true })\n    8) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">↵Home Loan EMI Calculator⇆</a> aka getByRole('link', { name: 'Home Loan EMI Calculator', exact: true })\n    9) <a href=\"https://emicalculator.net/loan-calculator/\">↵Loan Calculator⇆</a> aka getByRole('link', { name: 'Loan Calculator', exact: true })\n    10) <a class=\"title\" href=\"https://emicalculator.net/tax-free-loans-from-employer-how-the-rules-have-changed/\">Tax-Free Loans from Employer: How the Rules Have …</a> aka getByRole('link', { name: 'Tax-Free Loans from Employer' })\n    ...\n\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: /Loan/ })\u001b[22m\n\n\n\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:11\n\n\u001b[0m \u001b[90m  9 |\u001b[39m\n \u001b[90m 10 |\u001b[39m \u001b[33mWhen\u001b[39m(\u001b[32m'I switch product using the legacy Personal Loan tab locator'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ legacyPage }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m   \u001b[36mawait\u001b[39m legacyPage\u001b[33m.\u001b[39mpersonalLoanTab\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m\n \u001b[90m 14 |\u001b[39m \u001b[33mThen\u001b[39m(\u001b[32m'the {string} tab is the active product'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ emiPage }\u001b[33m,\u001b[39m tab\u001b[33m:\u001b[39m string) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:11:36)\u001b[22m\n\u001b[2m    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:11:5\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "When I switch product using the legacy Personal Loan tab locator",
+                          "duration": 193,
+                          "error": {
+                            "message": "Error: locator.click: Error: strict mode violation: getByRole('link', { name: /Loan/ }) resolved to 13 elements:\n    1) <a href=\"#\" aria-haspopup=\"true\" aria-expanded=\"false\" data-toggle=\"dropdown\" id=\"menu-item-dropdown-2696\" class=\"dropdown-toggle nav-link\" title=\"Loan Calculators & Widgets\">Loan Calculators & Widgets</a> aka getByRole('link', { name: 'Loan Calculators & Widgets' })\n    2) <a href=\"#\">Home Loan</a> aka getByRole('link', { name: 'Home Loan', exact: true })\n    3) <a href=\"#\">Personal Loan</a> aka getByRole('link', { name: 'Personal Loan' })\n    4) <a href=\"#\">Car Loan</a> aka getByRole('link', { name: 'Car Loan' })\n    5) <a href=\"https://emicalculator.net/loan-calculator/\">Loan Calculator — Calculate EMI, Affordability, T…</a> aka locator('#menu-item-3009').getByRole('link', { name: 'Loan Calculator — Calculate' })\n    6) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">Home Loan EMI Calculator with Prepayments, Taxes …</a> aka locator('#menu-item-3293').getByRole('link', { name: 'Home Loan EMI Calculator with' })\n    7) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">Home Loan EMI Calculator with Prepayments</a> aka getByRole('link', { name: 'Home Loan EMI Calculator with Prepayments', exact: true })\n    8) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">↵Home Loan EMI Calculator⇆</a> aka getByRole('link', { name: 'Home Loan EMI Calculator', exact: true })\n    9) <a href=\"https://emicalculator.net/loan-calculator/\">↵Loan Calculator⇆</a> aka getByRole('link', { name: 'Loan Calculator', exact: true })\n    10) <a class=\"title\" href=\"https://emicalculator.net/tax-free-loans-from-employer-how-the-rules-have-changed/\">Tax-Free Loans from Employer: How the Rules Have …</a> aka getByRole('link', { name: 'Tax-Free Loans from Employer' })\n    ...\n\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: /Loan/ })\u001b[22m\n",
+                            "stack": "Error: locator.click: Error: strict mode violation: getByRole('link', { name: /Loan/ }) resolved to 13 elements:\n    1) <a href=\"#\" aria-haspopup=\"true\" aria-expanded=\"false\" data-toggle=\"dropdown\" id=\"menu-item-dropdown-2696\" class=\"dropdown-toggle nav-link\" title=\"Loan Calculators & Widgets\">Loan Calculators & Widgets</a> aka getByRole('link', { name: 'Loan Calculators & Widgets' })\n    2) <a href=\"#\">Home Loan</a> aka getByRole('link', { name: 'Home Loan', exact: true })\n    3) <a href=\"#\">Personal Loan</a> aka getByRole('link', { name: 'Personal Loan' })\n    4) <a href=\"#\">Car Loan</a> aka getByRole('link', { name: 'Car Loan' })\n    5) <a href=\"https://emicalculator.net/loan-calculator/\">Loan Calculator — Calculate EMI, Affordability, T…</a> aka locator('#menu-item-3009').getByRole('link', { name: 'Loan Calculator — Calculate' })\n    6) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">Home Loan EMI Calculator with Prepayments, Taxes …</a> aka locator('#menu-item-3293').getByRole('link', { name: 'Home Loan EMI Calculator with' })\n    7) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">Home Loan EMI Calculator with Prepayments</a> aka getByRole('link', { name: 'Home Loan EMI Calculator with Prepayments', exact: true })\n    8) <a href=\"https://emicalculator.net/home-loan-emi-calculator/\">↵Home Loan EMI Calculator⇆</a> aka getByRole('link', { name: 'Home Loan EMI Calculator', exact: true })\n    9) <a href=\"https://emicalculator.net/loan-calculator/\">↵Loan Calculator⇆</a> aka getByRole('link', { name: 'Loan Calculator', exact: true })\n    10) <a class=\"title\" href=\"https://emicalculator.net/tax-free-loans-from-employer-how-the-rules-have-changed/\">Tax-Free Loans from Employer: How the Rules Have …</a> aka getByRole('link', { name: 'Tax-Free Loans from Employer' })\n    ...\n\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: /Loan/ })\u001b[22m\n\n    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:11:36)\n    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:11:5",
+                            "location": {
+                              "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                              "column": 36,
+                              "line": 11
+                            },
+                            "snippet": "\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:11\n\n\u001b[0m \u001b[90m  9 |\u001b[39m\n \u001b[90m 10 |\u001b[39m \u001b[33mWhen\u001b[39m(\u001b[32m'I switch product using the legacy Personal Loan tab locator'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ legacyPage }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m   \u001b[36mawait\u001b[39m legacyPage\u001b[33m.\u001b[39mpersonalLoanTab\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m\n \u001b[90m 14 |\u001b[39m \u001b[33mThen\u001b[39m(\u001b[32m'the {string} tab is the active product'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ emiPage }\u001b[33m,\u001b[39m tab\u001b[33m:\u001b[39m string) \u001b[33m=>\u001b[39m {\u001b[0m"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-10-06T10:15:17.642Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "<repo>\\reports\\self-healing\\test-results\\features-self-healing-brok-c7fde-name-strict-mode-violation--self-healing\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "<repo>\\reports\\self-healing\\test-results\\features-self-healing-brok-c7fde-name-strict-mode-violation--self-healing\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                        "column": 36,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "178da9c2a606cf94d74b-b8215def360f1cce2fbd",
+              "file": ".features-gen-self-heal/features/self-healing/broken-locators.feature.spec.js",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "Broken 2: renamed id",
+              "ok": false,
+              "tags": [
+                "self-healing"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "self-healing",
+                  "projectName": "self-healing",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6035,
+                      "error": {
+                        "message": "TimeoutError: locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#loan-amount')\u001b[22m\n",
+                        "stack": "TimeoutError: locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#loan-amount')\u001b[22m\n\n    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:21:38)\n    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:16:5",
+                        "location": {
+                          "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                          "column": 38,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:21\n\n\u001b[0m \u001b[90m 19 |\u001b[39m   \u001b[32m'I type {word} into the legacy loan amount locator'\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 20 |\u001b[39m   \u001b[36masync\u001b[39m ({ legacyPage }\u001b[33m,\u001b[39m amount\u001b[33m:\u001b[39m string) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m     \u001b[36mawait\u001b[39m legacyPage\u001b[33m.\u001b[39mloanAmountInput\u001b[33m.\u001b[39mfill(\u001b[33mString\u001b[39m(parseAmountShorthand(amount)))\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                      \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m     \u001b[36mawait\u001b[39m legacyPage\u001b[33m.\u001b[39mloanAmountInput\u001b[33m.\u001b[39mpress(\u001b[32m'Tab'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   }\u001b[33m,\u001b[39m\n \u001b[90m 24 |\u001b[39m )\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                            "column": 38,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#loan-amount')\u001b[22m\n\n\n\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:21\n\n\u001b[0m \u001b[90m 19 |\u001b[39m   \u001b[32m'I type {word} into the legacy loan amount locator'\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 20 |\u001b[39m   \u001b[36masync\u001b[39m ({ legacyPage }\u001b[33m,\u001b[39m amount\u001b[33m:\u001b[39m string) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m     \u001b[36mawait\u001b[39m legacyPage\u001b[33m.\u001b[39mloanAmountInput\u001b[33m.\u001b[39mfill(\u001b[33mString\u001b[39m(parseAmountShorthand(amount)))\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                      \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m     \u001b[36mawait\u001b[39m legacyPage\u001b[33m.\u001b[39mloanAmountInput\u001b[33m.\u001b[39mpress(\u001b[32m'Tab'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   }\u001b[33m,\u001b[39m\n \u001b[90m 24 |\u001b[39m )\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:21:38)\u001b[22m\n\u001b[2m    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:16:5\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "When I type 25L into the legacy loan amount locator",
+                          "duration": 5016,
+                          "error": {
+                            "message": "TimeoutError: locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#loan-amount')\u001b[22m\n",
+                            "stack": "TimeoutError: locator.fill: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#loan-amount')\u001b[22m\n\n    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:21:38)\n    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:16:5",
+                            "location": {
+                              "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                              "column": 38,
+                              "line": 21
+                            },
+                            "snippet": "\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:21\n\n\u001b[0m \u001b[90m 19 |\u001b[39m   \u001b[32m'I type {word} into the legacy loan amount locator'\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 20 |\u001b[39m   \u001b[36masync\u001b[39m ({ legacyPage }\u001b[33m,\u001b[39m amount\u001b[33m:\u001b[39m string) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m     \u001b[36mawait\u001b[39m legacyPage\u001b[33m.\u001b[39mloanAmountInput\u001b[33m.\u001b[39mfill(\u001b[33mString\u001b[39m(parseAmountShorthand(amount)))\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                      \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m     \u001b[36mawait\u001b[39m legacyPage\u001b[33m.\u001b[39mloanAmountInput\u001b[33m.\u001b[39mpress(\u001b[32m'Tab'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   }\u001b[33m,\u001b[39m\n \u001b[90m 24 |\u001b[39m )\u001b[33m;\u001b[39m\u001b[0m"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-10-06T10:15:20.044Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "<repo>\\reports\\self-healing\\test-results\\features-self-healing-brok-7aaf2-ocators-Broken-2-renamed-id-self-healing\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "<repo>\\reports\\self-healing\\test-results\\features-self-healing-brok-7aaf2-ocators-Broken-2-renamed-id-self-healing\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                        "column": 38,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "178da9c2a606cf94d74b-6b6e2b61ccac7c8f486e",
+              "file": ".features-gen-self-heal/features/self-healing/broken-locators.feature.spec.js",
+              "line": 15,
+              "column": 7
+            },
+            {
+              "title": "Broken 3: absolute XPath",
+              "ok": false,
+              "tags": [
+                "self-healing"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "self-healing",
+                  "projectName": "self-healing",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6124,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: Interest rate input\nExpected: \u001b[32m\"9\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveValue\" Interest rate input with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('xpath=/html/body/div[1]/div/main/article/div[2]/div[1]/div/form/div[2]/div[1]/input')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: Interest rate input\nExpected: \u001b[32m\"9\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveValue\" Interest rate input with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('xpath=/html/body/div[1]/div/main/article/div[2]/div[1]/div/form/div[2]/div[1]/input')\u001b[22m\n\n    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:38:48)\n    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:21:5",
+                        "location": {
+                          "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                          "column": 48,
+                          "line": 38
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:38\n\n\u001b[0m \u001b[90m 36 |\u001b[39m   \u001b[32m'the legacy interest rate locator shows the default rate {string}'\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 37 |\u001b[39m   \u001b[36masync\u001b[39m ({ legacyPage\u001b[33m,\u001b[39m emiPage }\u001b[33m,\u001b[39m rate\u001b[33m:\u001b[39m string) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 38 |\u001b[39m     \u001b[36mawait\u001b[39m expect(legacyPage\u001b[33m.\u001b[39minterestRateInput)\u001b[33m.\u001b[39mtoHaveValue(rate)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 39 |\u001b[39m     \u001b[36mawait\u001b[39m expect(emiPage\u001b[33m.\u001b[39mform\u001b[33m.\u001b[39minterestRate)\u001b[33m.\u001b[39mtoHaveValue(rate)\u001b[33m;\u001b[39m\n \u001b[90m 40 |\u001b[39m   }\u001b[33m,\u001b[39m\n \u001b[90m 41 |\u001b[39m )\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                            "column": 48,
+                            "line": 38
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: Interest rate input\nExpected: \u001b[32m\"9\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveValue\" Interest rate input with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('xpath=/html/body/div[1]/div/main/article/div[2]/div[1]/div/form/div[2]/div[1]/input')\u001b[22m\n\n\n\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:38\n\n\u001b[0m \u001b[90m 36 |\u001b[39m   \u001b[32m'the legacy interest rate locator shows the default rate {string}'\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 37 |\u001b[39m   \u001b[36masync\u001b[39m ({ legacyPage\u001b[33m,\u001b[39m emiPage }\u001b[33m,\u001b[39m rate\u001b[33m:\u001b[39m string) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 38 |\u001b[39m     \u001b[36mawait\u001b[39m expect(legacyPage\u001b[33m.\u001b[39minterestRateInput)\u001b[33m.\u001b[39mtoHaveValue(rate)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 39 |\u001b[39m     \u001b[36mawait\u001b[39m expect(emiPage\u001b[33m.\u001b[39mform\u001b[33m.\u001b[39minterestRate)\u001b[33m.\u001b[39mtoHaveValue(rate)\u001b[33m;\u001b[39m\n \u001b[90m 40 |\u001b[39m   }\u001b[33m,\u001b[39m\n \u001b[90m 41 |\u001b[39m )\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:38:48)\u001b[22m\n\u001b[2m    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:21:5\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Then the legacy interest rate locator shows the default rate \"9\"",
+                          "duration": 5013,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: Interest rate input\nExpected: \u001b[32m\"9\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveValue\" Interest rate input with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('xpath=/html/body/div[1]/div/main/article/div[2]/div[1]/div/form/div[2]/div[1]/input')\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: Interest rate input\nExpected: \u001b[32m\"9\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveValue\" Interest rate input with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('xpath=/html/body/div[1]/div/main/article/div[2]/div[1]/div/form/div[2]/div[1]/input')\u001b[22m\n\n    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:38:48)\n    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:21:5",
+                            "location": {
+                              "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                              "column": 48,
+                              "line": 38
+                            },
+                            "snippet": "\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:38\n\n\u001b[0m \u001b[90m 36 |\u001b[39m   \u001b[32m'the legacy interest rate locator shows the default rate {string}'\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 37 |\u001b[39m   \u001b[36masync\u001b[39m ({ legacyPage\u001b[33m,\u001b[39m emiPage }\u001b[33m,\u001b[39m rate\u001b[33m:\u001b[39m string) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 38 |\u001b[39m     \u001b[36mawait\u001b[39m expect(legacyPage\u001b[33m.\u001b[39minterestRateInput)\u001b[33m.\u001b[39mtoHaveValue(rate)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 39 |\u001b[39m     \u001b[36mawait\u001b[39m expect(emiPage\u001b[33m.\u001b[39mform\u001b[33m.\u001b[39minterestRate)\u001b[33m.\u001b[39mtoHaveValue(rate)\u001b[33m;\u001b[39m\n \u001b[90m 40 |\u001b[39m   }\u001b[33m,\u001b[39m\n \u001b[90m 41 |\u001b[39m )\u001b[33m;\u001b[39m\u001b[0m"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-10-06T10:15:27.005Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "<repo>\\reports\\self-healing\\test-results\\features-self-healing-brok-0f56e-ors-Broken-3-absolute-XPath-self-healing\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "<repo>\\reports\\self-healing\\test-results\\features-self-healing-brok-0f56e-ors-Broken-3-absolute-XPath-self-healing\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                        "column": 48,
+                        "line": 38
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "178da9c2a606cf94d74b-c9e0d1022d17a64e3a7c",
+              "file": ".features-gen-self-heal/features/self-healing/broken-locators.feature.spec.js",
+              "line": 20,
+              "column": 7
+            },
+            {
+              "title": "Broken 4: positional nth-child CSS",
+              "ok": false,
+              "tags": [
+                "self-healing"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "self-healing",
+                  "projectName": "self-healing",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6022,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: Monthly EMI amount\nExpected pattern: \u001b[32m/^\\s*₹\\s*44,986\\s*$/\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" Monthly EMI amount with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#emicalculatordashboard > div:nth-child(2) > div:nth-child(1) > p')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: Monthly EMI amount\nExpected pattern: \u001b[32m/^\\s*₹\\s*44,986\\s*$/\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" Monthly EMI amount with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#emicalculatordashboard > div:nth-child(2) > div:nth-child(1) > p')\u001b[22m\n\n    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:51:46)\n    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:25:5",
+                        "location": {
+                          "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                          "column": 46,
+                          "line": 51
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:51\n\n\u001b[0m \u001b[90m 49 |\u001b[39m       months\u001b[33m:\u001b[39m yearsToMonths(\u001b[35m20\u001b[39m)\u001b[33m,\u001b[39m\n \u001b[90m 50 |\u001b[39m     })\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 51 |\u001b[39m     \u001b[36mawait\u001b[39m expect(legacyPage\u001b[33m.\u001b[39mmonthlyEmiValue)\u001b[33m.\u001b[39mtoHaveText(\n \u001b[90m    |\u001b[39m                                              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 52 |\u001b[39m       \u001b[36mnew\u001b[39m \u001b[33mRegExp\u001b[39m(\u001b[32m`^\\\\s*₹\\\\s*${formatInr(emi)}\\\\s*$`\u001b[39m)\u001b[33m,\u001b[39m\n \u001b[90m 53 |\u001b[39m     )\u001b[33m;\u001b[39m\n \u001b[90m 54 |\u001b[39m   }\u001b[33m,\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                            "column": 46,
+                            "line": 51
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: Monthly EMI amount\nExpected pattern: \u001b[32m/^\\s*₹\\s*44,986\\s*$/\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" Monthly EMI amount with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#emicalculatordashboard > div:nth-child(2) > div:nth-child(1) > p')\u001b[22m\n\n\n\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:51\n\n\u001b[0m \u001b[90m 49 |\u001b[39m       months\u001b[33m:\u001b[39m yearsToMonths(\u001b[35m20\u001b[39m)\u001b[33m,\u001b[39m\n \u001b[90m 50 |\u001b[39m     })\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 51 |\u001b[39m     \u001b[36mawait\u001b[39m expect(legacyPage\u001b[33m.\u001b[39mmonthlyEmiValue)\u001b[33m.\u001b[39mtoHaveText(\n \u001b[90m    |\u001b[39m                                              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 52 |\u001b[39m       \u001b[36mnew\u001b[39m \u001b[33mRegExp\u001b[39m(\u001b[32m`^\\\\s*₹\\\\s*${formatInr(emi)}\\\\s*$`\u001b[39m)\u001b[33m,\u001b[39m\n \u001b[90m 53 |\u001b[39m     )\u001b[33m;\u001b[39m\n \u001b[90m 54 |\u001b[39m   }\u001b[33m,\u001b[39m\u001b[0m\n\u001b[2m    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:51:46)\u001b[22m\n\u001b[2m    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:25:5\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Then the legacy monthly EMI locator shows the EMI for the default 50L loan at 9% for 20 years",
+                          "duration": 5023,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: Monthly EMI amount\nExpected pattern: \u001b[32m/^\\s*₹\\s*44,986\\s*$/\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" Monthly EMI amount with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#emicalculatordashboard > div:nth-child(2) > div:nth-child(1) > p')\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: Monthly EMI amount\nExpected pattern: \u001b[32m/^\\s*₹\\s*44,986\\s*$/\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" Monthly EMI amount with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#emicalculatordashboard > div:nth-child(2) > div:nth-child(1) > p')\u001b[22m\n\n    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:51:46)\n    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:25:5",
+                            "location": {
+                              "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                              "column": 46,
+                              "line": 51
+                            },
+                            "snippet": "\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:51\n\n\u001b[0m \u001b[90m 49 |\u001b[39m       months\u001b[33m:\u001b[39m yearsToMonths(\u001b[35m20\u001b[39m)\u001b[33m,\u001b[39m\n \u001b[90m 50 |\u001b[39m     })\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 51 |\u001b[39m     \u001b[36mawait\u001b[39m expect(legacyPage\u001b[33m.\u001b[39mmonthlyEmiValue)\u001b[33m.\u001b[39mtoHaveText(\n \u001b[90m    |\u001b[39m                                              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 52 |\u001b[39m       \u001b[36mnew\u001b[39m \u001b[33mRegExp\u001b[39m(\u001b[32m`^\\\\s*₹\\\\s*${formatInr(emi)}\\\\s*$`\u001b[39m)\u001b[33m,\u001b[39m\n \u001b[90m 53 |\u001b[39m     )\u001b[33m;\u001b[39m\n \u001b[90m 54 |\u001b[39m   }\u001b[33m,\u001b[39m\u001b[0m"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-10-06T10:15:37.393Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "<repo>\\reports\\self-healing\\test-results\\features-self-healing-brok-e74d1--4-positional-nth-child-CSS-self-healing\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "<repo>\\reports\\self-healing\\test-results\\features-self-healing-brok-e74d1--4-positional-nth-child-CSS-self-healing\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                        "column": 46,
+                        "line": 51
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "178da9c2a606cf94d74b-2b5b717fff4021fee9d8",
+              "file": ".features-gen-self-heal/features/self-healing/broken-locators.feature.spec.js",
+              "line": 24,
+              "column": 7
+            },
+            {
+              "title": "Broken 5: drifted heading text",
+              "ok": false,
+              "tags": [
+                "self-healing"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "self-healing",
+                  "projectName": "self-healing",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6112,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: Loan EMI heading\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" Loan EMI heading with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Monthly EMI' })\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: Loan EMI heading\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" Loan EMI heading with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Monthly EMI' })\u001b[22m\n\n    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:58:39)\n    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:29:5",
+                        "location": {
+                          "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                          "column": 39,
+                          "line": 58
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:58\n\n\u001b[0m \u001b[90m 56 |\u001b[39m\n \u001b[90m 57 |\u001b[39m \u001b[33mThen\u001b[39m(\u001b[32m'the legacy EMI heading locator is visible and names the loan EMI'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ legacyPage }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 58 |\u001b[39m   \u001b[36mawait\u001b[39m expect(legacyPage\u001b[33m.\u001b[39memiHeading)\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 59 |\u001b[39m   \u001b[36mawait\u001b[39m expect(legacyPage\u001b[33m.\u001b[39memiHeading)\u001b[33m.\u001b[39mtoHaveText(\u001b[35m/\\bEMI\\b/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 60 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 61 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                            "column": 39,
+                            "line": 58
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: Loan EMI heading\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" Loan EMI heading with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Monthly EMI' })\u001b[22m\n\n\n\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:58\n\n\u001b[0m \u001b[90m 56 |\u001b[39m\n \u001b[90m 57 |\u001b[39m \u001b[33mThen\u001b[39m(\u001b[32m'the legacy EMI heading locator is visible and names the loan EMI'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ legacyPage }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 58 |\u001b[39m   \u001b[36mawait\u001b[39m expect(legacyPage\u001b[33m.\u001b[39memiHeading)\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 59 |\u001b[39m   \u001b[36mawait\u001b[39m expect(legacyPage\u001b[33m.\u001b[39memiHeading)\u001b[33m.\u001b[39mtoHaveText(\u001b[35m/\\bEMI\\b/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 60 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 61 |\u001b[39m\u001b[0m\n\u001b[2m    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:58:39)\u001b[22m\n\u001b[2m    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:29:5\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Then the legacy EMI heading locator is visible and names the loan EMI",
+                          "duration": 5026,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: Loan EMI heading\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" Loan EMI heading with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Monthly EMI' })\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: Loan EMI heading\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" Loan EMI heading with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Monthly EMI' })\u001b[22m\n\n    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:58:39)\n    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:29:5",
+                            "location": {
+                              "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                              "column": 39,
+                              "line": 58
+                            },
+                            "snippet": "\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:58\n\n\u001b[0m \u001b[90m 56 |\u001b[39m\n \u001b[90m 57 |\u001b[39m \u001b[33mThen\u001b[39m(\u001b[32m'the legacy EMI heading locator is visible and names the loan EMI'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ legacyPage }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 58 |\u001b[39m   \u001b[36mawait\u001b[39m expect(legacyPage\u001b[33m.\u001b[39memiHeading)\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 59 |\u001b[39m   \u001b[36mawait\u001b[39m expect(legacyPage\u001b[33m.\u001b[39memiHeading)\u001b[33m.\u001b[39mtoHaveText(\u001b[35m/\\bEMI\\b/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 60 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 61 |\u001b[39m\u001b[0m"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-10-06T10:15:44.329Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "<repo>\\reports\\self-healing\\test-results\\features-self-healing-brok-807c5-oken-5-drifted-heading-text-self-healing\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "<repo>\\reports\\self-healing\\test-results\\features-self-healing-brok-807c5-oken-5-drifted-heading-text-self-healing\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                        "column": 39,
+                        "line": 58
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "178da9c2a606cf94d74b-97e3b792b7837d7ecf0c",
+              "file": ".features-gen-self-heal/features/self-healing/broken-locators.feature.spec.js",
+              "line": 28,
+              "column": 7
+            },
+            {
+              "title": "Control: a real assertion failure that must NOT be healed",
+              "ok": false,
+              "tags": [
+                "self-healing",
+                "negative-control"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "self-healing",
+                  "projectName": "self-healing",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 6673,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('#emiamount p')\nExpected: \u001b[32m\"₹\u001b[7m33,000\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"₹\u001b[7m44,986\u001b[27m\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" locator('#emiamount p') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#emiamount p')\u001b[22m\n\u001b[2m    13 × locator resolved to <p>…</p>\u001b[22m\n\u001b[2m       - unexpected value \"₹44,986\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('#emiamount p')\nExpected: \u001b[32m\"₹\u001b[7m33,000\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"₹\u001b[7m44,986\u001b[27m\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" locator('#emiamount p') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#emiamount p')\u001b[22m\n\u001b[2m    13 × locator resolved to <p>…</p>\u001b[22m\n\u001b[2m       - unexpected value \"₹44,986\"\u001b[22m\n\n    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:63:29)\n    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:33:5",
+                        "location": {
+                          "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                          "column": 29,
+                          "line": 63
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:63\n\n\u001b[0m \u001b[90m 61 |\u001b[39m\n \u001b[90m 62 |\u001b[39m \u001b[33mThen\u001b[39m(\u001b[32m'the monthly EMI shows {string} for the default loan'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ emiPage }\u001b[33m,\u001b[39m shown\u001b[33m:\u001b[39m string) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 63 |\u001b[39m   \u001b[36mawait\u001b[39m expect(emiPage\u001b[33m.\u001b[39memi)\u001b[33m.\u001b[39mtoHaveText(shown)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 64 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                            "column": 29,
+                            "line": 63
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('#emiamount p')\nExpected: \u001b[32m\"₹\u001b[7m33,000\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"₹\u001b[7m44,986\u001b[27m\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" locator('#emiamount p') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#emiamount p')\u001b[22m\n\u001b[2m    13 × locator resolved to <p>…</p>\u001b[22m\n\u001b[2m       - unexpected value \"₹44,986\"\u001b[22m\n\n\n\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:63\n\n\u001b[0m \u001b[90m 61 |\u001b[39m\n \u001b[90m 62 |\u001b[39m \u001b[33mThen\u001b[39m(\u001b[32m'the monthly EMI shows {string} for the default loan'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ emiPage }\u001b[33m,\u001b[39m shown\u001b[33m:\u001b[39m string) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 63 |\u001b[39m   \u001b[36mawait\u001b[39m expect(emiPage\u001b[33m.\u001b[39memi)\u001b[33m.\u001b[39mtoHaveText(shown)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 64 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m\u001b[0m\n\u001b[2m    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:63:29)\u001b[22m\n\u001b[2m    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:33:5\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Then the monthly EMI shows \"₹33,000\" for the default loan",
+                          "duration": 5024,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('#emiamount p')\nExpected: \u001b[32m\"₹\u001b[7m33,000\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"₹\u001b[7m44,986\u001b[27m\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" locator('#emiamount p') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#emiamount p')\u001b[22m\n\u001b[2m    13 × locator resolved to <p>…</p>\u001b[22m\n\u001b[2m       - unexpected value \"₹44,986\"\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('#emiamount p')\nExpected: \u001b[32m\"₹\u001b[7m33,000\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"₹\u001b[7m44,986\u001b[27m\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" locator('#emiamount p') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#emiamount p')\u001b[22m\n\u001b[2m    13 × locator resolved to <p>…</p>\u001b[22m\n\u001b[2m       - unexpected value \"₹44,986\"\u001b[22m\n\n    at Object.<anonymous> (<repo>\\src\\steps\\self-healing\\legacy.steps.ts:63:29)\n    at <repo>\\.features-gen-self-heal\\features\\self-healing\\broken-locators.feature.spec.js:33:5",
+                            "location": {
+                              "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                              "column": 29,
+                              "line": 63
+                            },
+                            "snippet": "\u001b[90m   at \u001b[39msrc\\steps\\self-healing\\legacy.steps.ts:63\n\n\u001b[0m \u001b[90m 61 |\u001b[39m\n \u001b[90m 62 |\u001b[39m \u001b[33mThen\u001b[39m(\u001b[32m'the monthly EMI shows {string} for the default loan'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ emiPage }\u001b[33m,\u001b[39m shown\u001b[33m:\u001b[39m string) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 63 |\u001b[39m   \u001b[36mawait\u001b[39m expect(emiPage\u001b[33m.\u001b[39memi)\u001b[33m.\u001b[39mtoHaveText(shown)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 64 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 65 |\u001b[39m\u001b[0m"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-10-06T10:15:51.334Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "<repo>\\reports\\self-healing\\test-results\\features-self-healing-brok-2ed87-ure-that-must-NOT-be-healed-self-healing\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "<repo>\\reports\\self-healing\\test-results\\features-self-healing-brok-2ed87-ure-that-must-NOT-be-healed-self-healing\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "<repo>\\src\\steps\\self-healing\\legacy.steps.ts",
+                        "column": 29,
+                        "line": 63
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "178da9c2a606cf94d74b-f8559ac6e889aa0dddf2",
+              "file": ".features-gen-self-heal/features/self-healing/broken-locators.feature.spec.js",
+              "line": 32,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-06T10:15:16.816Z",
+    "duration": 41434.009,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 6,
+    "flaky": 0
+  }
+}
